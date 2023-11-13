@@ -343,6 +343,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\C\HuffEnc.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">
+      </PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\..\..\C\LzFind.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
@@ -534,6 +544,7 @@
     <ClCompile Include="..\..\..\Common\LzFindPrepare.cpp" />
     <ClCompile Include="..\..\..\Common\MyString.cpp" />
     <ClCompile Include="..\..\..\Common\MyVector.cpp" />
+    <ClCompile Include="..\..\..\Common\MyXml.cpp" />
     <ClCompile Include="..\..\..\Common\NewHandler.cpp" />
     <ClCompile Include="..\..\..\Common\Random.cpp" />
     <ClCompile Include="..\..\..\Common\Sha1Prepare.cpp" />
@@ -599,7 +610,12 @@
     <ClCompile Include="..\..\Archive\Common\ItemNameUtils.cpp" />
     <ClCompile Include="..\..\Archive\Common\MultiStream.cpp" />
     <ClCompile Include="..\..\Archive\Common\OutStreamWithCRC.cpp" />
+    <ClCompile Include="..\..\Archive\Common\OutStreamWithSha1.cpp" />
     <ClCompile Include="..\..\Archive\Common\ParseProperties.cpp" />
+    <ClCompile Include="..\..\Archive\Wim\WimHandler.cpp" />
+    <ClCompile Include="..\..\Archive\Wim\WimHandlerOut.cpp" />
+    <ClCompile Include="..\..\Archive\Wim\WimIn.cpp" />
+    <ClCompile Include="..\..\Archive\Wim\WimRegister.cpp" />
     <ClCompile Include="..\..\Common\CreateCoder.cpp" />
     <ClCompile Include="..\..\Common\CWrappers.cpp" />
     <ClCompile Include="..\..\Common\FilePathAutoRename.cpp" />
@@ -625,6 +641,10 @@
     <ClCompile Include="..\..\Compress\LzmaDecoder.cpp" />
     <ClCompile Include="..\..\Compress\LzmaEncoder.cpp" />
     <ClCompile Include="..\..\Compress\LzmaRegister.cpp" />
+    <ClCompile Include="..\..\Compress\LzmsDecoder.cpp" />
+    <ClCompile Include="..\..\Compress\LzxDecoder.cpp" />
+    <ClCompile Include="..\..\Compress\XpressDecoder.cpp" />
+    <ClCompile Include="..\..\Crypto\RandGen.cpp" />
     <ClCompile Include="..\..\UI\Agent\Agent.cpp" />
     <ClCompile Include="..\..\UI\Agent\AgentOut.cpp" />
     <ClCompile Include="..\..\UI\Agent\AgentProxy.cpp" />
@@ -751,6 +771,7 @@
     <ClInclude Include="..\..\..\..\C\Compiler.h" />
     <ClInclude Include="..\..\..\..\C\CpuArch.h" />
     <ClInclude Include="..\..\..\..\C\DllSecur.h" />
+    <ClInclude Include="..\..\..\..\C\HuffEnc.h" />
     <ClInclude Include="..\..\..\..\C\LzFind.h" />
     <ClInclude Include="..\..\..\..\C\LzFindMt.h" />
     <ClInclude Include="..\..\..\..\C\Lzma2Dec.h" />
@@ -760,6 +781,7 @@
     <ClInclude Include="..\..\..\..\C\LzmaEnc.h" />
     <ClInclude Include="..\..\..\..\C\MtCoder.h" />
     <ClInclude Include="..\..\..\..\C\MtDec.h" />
+    <ClInclude Include="..\..\..\..\C\Precomp.h" />
     <ClInclude Include="..\..\..\..\C\Sha1.h" />
     <ClInclude Include="..\..\..\..\C\Sha256.h" />
     <ClInclude Include="..\..\..\..\C\Sort.h" />
@@ -778,6 +800,7 @@
     <ClInclude Include="..\..\..\Common\MyCom.h" />
     <ClInclude Include="..\..\..\Common\MyString.h" />
     <ClInclude Include="..\..\..\Common\MyVector.h" />
+    <ClInclude Include="..\..\..\Common\MyXml.h" />
     <ClInclude Include="..\..\..\Common\NewHandler.h" />
     <ClInclude Include="..\..\..\Common\Random.h" />
     <ClInclude Include="..\..\..\Common\StringConvert.h" />
@@ -850,8 +873,11 @@
     <ClInclude Include="..\..\Archive\Common\ItemNameUtils.h" />
     <ClInclude Include="..\..\Archive\Common\MultiStream.h" />
     <ClInclude Include="..\..\Archive\Common\OutStreamWithCRC.h" />
+    <ClInclude Include="..\..\Archive\Common\OutStreamWithSha1.h" />
     <ClInclude Include="..\..\Archive\Common\ParseProperties.h" />
     <ClInclude Include="..\..\Archive\IArchive.h" />
+    <ClInclude Include="..\..\Archive\Wim\WimHandler.h" />
+    <ClInclude Include="..\..\Archive\Wim\WimIn.h" />
     <ClInclude Include="..\..\Common\CreateCoder.h" />
     <ClInclude Include="..\..\Common\CWrappers.h" />
     <ClInclude Include="..\..\Common\FilePathAutoRename.h" />
@@ -873,6 +899,10 @@
     <ClInclude Include="..\..\Compress\Lzma2Encoder.h" />
     <ClInclude Include="..\..\Compress\LzmaDecoder.h" />
     <ClInclude Include="..\..\Compress\LzmaEncoder.h" />
+    <ClInclude Include="..\..\Compress\LzmsDecoder.h" />
+    <ClInclude Include="..\..\Compress\LzxDecoder.h" />
+    <ClInclude Include="..\..\Compress\XpressDecoder.h" />
+    <ClInclude Include="..\..\Crypto\RandGen.h" />
     <ClInclude Include="..\..\ICoder.h" />
     <ClInclude Include="..\..\IDecl.h" />
     <ClInclude Include="..\..\IPassword.h" />
