@@ -781,7 +781,6 @@
     <ClInclude Include="..\..\..\..\C\LzmaEnc.h" />
     <ClInclude Include="..\..\..\..\C\MtCoder.h" />
     <ClInclude Include="..\..\..\..\C\MtDec.h" />
-    <ClInclude Include="..\..\..\..\C\Precomp.h" />
     <ClInclude Include="..\..\..\..\C\Sha1.h" />
     <ClInclude Include="..\..\..\..\C\Sha256.h" />
     <ClInclude Include="..\..\..\..\C\Sort.h" />

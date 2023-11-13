@@ -67,6 +67,12 @@
     <Filter Include="Interface">
       <UniqueIdentifier>{79bdc7c0-9140-4cdd-a756-efa9b1ce101a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Archive\Wim">
+      <UniqueIdentifier>{cfaf5e8e-cf7f-4f20-8e77-998a8e308f20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto">
+      <UniqueIdentifier>{a6b9ebfa-0bd5-4fad-9986-07b194ef1a1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\UI\FileManager\7zipLogo.ico">
@@ -781,6 +787,39 @@
     <ClCompile Include="..\..\UI\FileManager\StringUtils.cpp" />
     <ClCompile Include="..\..\UI\FileManager\SysIconUtils.cpp" />
     <ClCompile Include="..\..\UI\FileManager\TextPairs.cpp" />
+    <ClCompile Include="..\..\Archive\Wim\WimHandler.cpp">
+      <Filter>Archive\Wim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Archive\Wim\WimHandlerOut.cpp">
+      <Filter>Archive\Wim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Archive\Wim\WimIn.cpp">
+      <Filter>Archive\Wim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Archive\Wim\WimRegister.cpp">
+      <Filter>Archive\Wim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Compress\XpressDecoder.cpp">
+      <Filter>Compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Crypto\RandGen.cpp">
+      <Filter>Crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Archive\Common\OutStreamWithSha1.cpp">
+      <Filter>Archive\Archive Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\MyXml.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\C\HuffEnc.c">
+      <Filter>C</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Compress\LzmsDecoder.cpp">
+      <Filter>Compress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Compress\LzxDecoder.cpp">
+      <Filter>Compress</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">
@@ -1457,6 +1496,33 @@
     <ClInclude Include="..\..\UI\FileManager\StringUtils.h" />
     <ClInclude Include="..\..\UI\FileManager\SysIconUtils.h" />
     <ClInclude Include="..\..\UI\FileManager\TextPairs.h" />
+    <ClInclude Include="..\..\Archive\Wim\WimHandler.h">
+      <Filter>Archive\Wim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Archive\Wim\WimIn.h">
+      <Filter>Archive\Wim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Compress\XpressDecoder.h">
+      <Filter>Compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Crypto\RandGen.h">
+      <Filter>Crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Archive\Common\OutStreamWithSha1.h">
+      <Filter>Archive\Archive Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\MyXml.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\C\HuffEnc.h">
+      <Filter>C</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Compress\LzmsDecoder.h">
+      <Filter>Compress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Compress\LzxDecoder.h">
+      <Filter>Compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="..\..\UI\FileManager\7zFM.exe.manifest" />
