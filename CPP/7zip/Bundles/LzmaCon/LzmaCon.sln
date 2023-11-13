@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34114.132
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LzmaCon", "LzmaCon.vcxproj", "{B6AA7F6B-E6F3-459B-97E7-E4AB69D36E90}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6AA7F6B-E6F3-459B-97E7-E4AB69D36E90}.Debug|x86.ActiveCfg = Debug|Win32
+		{B6AA7F6B-E6F3-459B-97E7-E4AB69D36E90}.Debug|x86.Build.0 = Debug|Win32
+		{B6AA7F6B-E6F3-459B-97E7-E4AB69D36E90}.Release|x86.ActiveCfg = Release|Win32
+		{B6AA7F6B-E6F3-459B-97E7-E4AB69D36E90}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {64E77C59-589B-489C-B247-A584A800FB6C}
+	EndGlobalSection
+EndGlobal
