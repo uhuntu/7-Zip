@@ -1014,7 +1014,7 @@ bool CProgressDialog::OnExternalCloseMessage()
       fm.ErrorMessage.Title = "7-Zip";
     MessageBoxW(*this, fm.ErrorMessage.Message, fm.ErrorMessage.Title, MB_ICONERROR);
   }
-  else if (!thereAreMessages)
+  else if (/*!thereAreMessages*/true)
   {
     MessagesDisplayed = true;
 

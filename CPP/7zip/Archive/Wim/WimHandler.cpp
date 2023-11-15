@@ -219,7 +219,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
         {
           char temp[64];
           RawLeGuidToString(h.Guid, temp);
-          temp[8] = 0; // for reduced GUID
+          //temp[8] = 0; // for reduced GUID
           AString s (temp);
           const char *ext = ".wim";
           if (h.NumParts != 1)
@@ -229,7 +229,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
               s.Add_UInt32(h.PartNumber);
             ext = ".swm";
           }
-          s += ext;
+          //s += ext;
           prop = s;
         }
       }

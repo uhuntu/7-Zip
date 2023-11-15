@@ -56,6 +56,14 @@ static void AddSizePair(UString &s, UINT resourceID, UInt64 value)
   s.Add_LF();
 }
 
+static void AddGuidPair(UString& s, UINT resourceID, FString guid)
+{
+    AddLangString(s, resourceID);
+    s += ": ";
+    AddGuidValue(s, guid);
+    s.Add_LF();
+}
+
 #endif
 
 class CThreadExtracting: public CProgressThreadVirt
@@ -126,7 +134,7 @@ HRESULT CThreadExtracting::ProcessVirt()
       FinalMessage.ErrorMessage.Message, Stat);
   
   #ifndef Z7_SFX
-  if (res == S_OK && ExtractCallbackSpec->IsOK())
+  if (res == S_OK/* && ExtractCallbackSpec->IsOK()*/)
   {
     if (HashBundle)
     {
@@ -140,6 +148,7 @@ HRESULT CThreadExtracting::ProcessVirt()
     
       AddValuePair(s, IDS_ARCHIVES_COLON, Stat.NumArchives, false);
       AddSizePair(s, IDS_PROP_PACKED_SIZE, Stat.PackSize);
+      AddGuidPair(s, IDS_PROP_WIM_GUID, Stat.WimGuid);
 
       if (Stat.NumFolders != 0)
         AddValuePair(s, IDS_PROP_FOLDERS, Stat.NumFolders);

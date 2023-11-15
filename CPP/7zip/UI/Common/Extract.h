@@ -80,9 +80,12 @@ struct CDecompressStat
   UInt64 NumFiles;
   UInt64 NumAltStreams;
 
+  FString WimGuid;
+
   void Clear()
   {
     NumArchives = UnpackSize = AltStreams_UnpackSize = PackSize = NumFolders = NumFiles = NumAltStreams = 0;
+    WimGuid = "test";
   }
 };
 

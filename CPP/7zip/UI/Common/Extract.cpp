@@ -226,8 +226,19 @@ static HRESULT DecompressArchive(
     if (archive->GetArchiveProperty(kpidPhySize, &prop) == S_OK)
       ConvertPropVariantToUInt64(prop, stdInProcessed);
   }
-  else
-    result = archive->Extract(&realIndices.Front(), realIndices.Size(), testMode, ecs);
+  else {
+      NCOM::CPropVariant prop;
+      if (archive->GetArchiveProperty(kpidName, &prop) == S_OK) {
+          BSTR bstr = prop.bstrVal;
+          if (bstr != NULL) {
+              ecs->WimGuid = prop.bstrVal;
+          }
+          else {
+              ecs->WimGuid = "null";
+          }
+      }
+      result = archive->Extract(&realIndices.Front(), realIndices.Size(), testMode, ecs);
+  }
   
   const HRESULT res2 = ecsCloser.Close();
   if (result == S_OK)
@@ -560,6 +571,7 @@ HRESULT Extract(
   }
 
   st.NumFolders = ecs->NumFolders;
+  st.WimGuid = ecs->WimGuid;
   st.NumFiles = ecs->NumFiles;
   st.NumAltStreams = ecs->NumAltStreams;
   st.UnpackSize = ecs->UnpackSize;

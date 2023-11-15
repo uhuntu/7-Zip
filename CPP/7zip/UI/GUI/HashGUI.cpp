@@ -88,6 +88,11 @@ void AddSizeValue(UString &s, UInt64 value)
   }
 }
 
+void AddGuidValue(UString& s, FString guid)
+{
+    s += guid;
+}
+
 void AddSizeValuePair(CPropNameValPairs &pairs, UINT resourceID, UInt64 value)
 {
   CProperty &pair = pairs.AddNew();
