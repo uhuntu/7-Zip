@@ -113,6 +113,22 @@
     <Image Include="..\..\UI\FileManager\Info2.bmp" />
     <Image Include="..\..\UI\FileManager\Move2.bmp" />
     <Image Include="..\..\UI\FileManager\Test2.bmp" />
+    <Image Include="..\..\UI\FileManager\Expand2.bmp" />
+    <Image Include="..\..\UI\FileManager\Mount2.bmp" />
+    <Image Include="..\..\UI\FileManager\New2.bmp" />
+    <Image Include="..\..\UI\FileManager\WimInfo2.bmp" />
+    <Image Include="..\..\UI\FileManager\Expand.bmp">
+      <Filter>Spec</Filter>
+    </Image>
+    <Image Include="..\..\UI\FileManager\Mount.bmp">
+      <Filter>Spec</Filter>
+    </Image>
+    <Image Include="..\..\UI\FileManager\New.bmp">
+      <Filter>Spec</Filter>
+    </Image>
+    <Image Include="..\..\UI\FileManager\WimInfo.bmp">
+      <Filter>Spec</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\UI\FileManager\ClassDefs.cpp">
