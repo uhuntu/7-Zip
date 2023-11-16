@@ -712,6 +712,25 @@ void CFileMenu::Load(HMENU hMenu, unsigned startPos)
   destMenu.RemoveAllItemsFrom(numRealItems);
 }
 
+bool ExecuteDismCommand(unsigned id)
+{
+	if (id >= kMenuCmdID_Plugin_Start)
+	{
+		g_App.GetFocusedPanel().InvokePluginCommand(id);
+		g_App.GetFocusedPanel()._sevenZipContextMenu.Release();
+		g_App.GetFocusedPanel()._systemContextMenu.Release();
+		return true;
+	}
+
+  switch (id)
+  {
+    // Dism
+    case IDM_MOUNT_TO: g_App.MountTo(); break;
+    default: return false;
+  }
+	return true;
+}
+
 bool ExecuteFileCommand(unsigned id)
 {
   if (id >= kMenuCmdID_Plugin_Start)
@@ -917,4 +936,12 @@ bool OnMenuCommand(HWND hWnd, unsigned id)
     }
   }
   return true;
+}
+
+bool OnDismCommand(unsigned id)
+{
+  if (ExecuteDismCommand(id))
+    return true;
+
+  return false;
 }

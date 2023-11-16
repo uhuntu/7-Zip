@@ -52,6 +52,7 @@ public:
   }
   virtual void OnTab() Z7_override;
   virtual void SetFocusToPath(unsigned index) Z7_override;
+  virtual void OnMount(bool move, bool copyToSame) Z7_override;
   virtual void OnCopy(bool move, bool copyToSame) Z7_override;
   virtual void OnSetSameFolder() Z7_override;
   virtual void OnSetSubFolder() Z7_override;
@@ -112,6 +113,7 @@ public:
   void DragBegin(unsigned panelIndex);
   void DragEnd();
   
+  void OnMount(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnSetSameFolder(unsigned srcPanelIndex);
   void OnSetSubFolder(unsigned srcPanelIndex);
@@ -134,6 +136,7 @@ public:
   void OpenItemOutside() { GetFocusedPanel().OpenSelectedItems(false); }
   void EditItem(bool useEditor) { GetFocusedPanel().EditItem(useEditor); }
   void Rename() { GetFocusedPanel().RenameFile(); }
+  void MountTo() { OnMount(false, false, GetFocusedPanelIndex()); }
   void CopyTo() { OnCopy(false, false, GetFocusedPanelIndex()); }
   void MoveTo() { OnCopy(true, false, GetFocusedPanelIndex()); }
   void Delete(bool toRecycleBin) { GetFocusedPanel().DeleteItems(toRecycleBin); }

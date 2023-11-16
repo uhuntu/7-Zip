@@ -57,7 +57,7 @@ void CPanelCallbackImp::SetFocusToPath(unsigned index)
   _app->Panels[newPanelIndex]._headerComboBox.ShowDropDown();
 }
 
-
+void CPanelCallbackImp::OnMount(bool move, bool copyToSame) { _app->OnMount(move, copyToSame, _index); }
 void CPanelCallbackImp::OnCopy(bool move, bool copyToSame) { _app->OnCopy(move, copyToSame, _index); }
 void CPanelCallbackImp::OnSetSameFolder() { _app->OnSetSameFolder(_index); }
 void CPanelCallbackImp::OnSetSubFolder()  { _app->OnSetSubFolder(_index); }
@@ -200,10 +200,10 @@ static const CButtonInfo g_ArchiveButtons[] =
 
 static const CButtonInfo g_WimDismButtons[] =
 {
-  { kMenuCmdID_WimDism_Mount,   IDB_MOUNT,   IDB_MOUNT2,   IDS_MOUNT },
-  { kMenuCmdID_WimDism_New,     IDB_NEW,     IDB_NEW2,     IDS_NEW },
-  { kMenuCmdID_WimDism_Expand,  IDB_EXPAND,  IDB_EXPAND2,  IDS_EXPAND },
-  { kMenuCmdID_WimDism_WimInfo, IDB_WIMINFO, IDB_WIMINFO2, IDS_WIMINFO }
+  { IDM_MOUNT_TO,   IDB_MOUNT,  IDB_MOUNT2,  IDS_MOUNT },
+  { IDM_NEW_FROM,   IDB_NEW,    IDB_NEW2,    IDS_NEW },
+  { IDM_EXPAND_TO,  IDB_EXPAND, IDB_EXPAND2, IDS_EXPAND },
+  { IDM_WIM_INFO,   IDB_WIMINFO,IDB_WIMINFO2,IDS_WIMINFO }
 };
 
 static bool SetButtonText(int commandID, const CButtonInfo *buttons, unsigned numButtons, UString &s)
@@ -849,6 +849,298 @@ void CApp::OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex)
     srcPanel.RefreshListCtrl(srcSelState);
   }
   
+  if (!copyToSame)
+  {
+    destPanel.RefreshListCtrl(destSelState);
+    srcPanel.KillSelection();
+  }
+
+  disableNotify1.Restore();
+  disableNotify2.Restore();
+  srcPanel.SetFocusToList();
+}
+
+void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
+{
+  const unsigned destPanelIndex = (NumPanels <= 1) ? srcPanelIndex : (1 - srcPanelIndex);
+  CPanel& srcPanel = Panels[srcPanelIndex];
+  CPanel& destPanel = Panels[destPanelIndex];
+
+  CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
+  CPanel::CDisableTimerProcessing disableTimerProcessing2(srcPanel);
+
+  if (move)
+  {
+    if (!srcPanel.CheckBeforeUpdate(IDS_MOVE))
+      return;
+  }
+  else if (!srcPanel.DoesItSupportOperations())
+  {
+    srcPanel.MessageBox_Error_UnsupportOperation();
+    return;
+  }
+
+  CRecordVector<UInt32> indices;
+  UString destPath;
+  bool useDestPanel = false;
+
+  {
+    if (copyToSame)
+    {
+      const int focusedItem = srcPanel._listView.GetFocusedItem();
+      if (focusedItem < 0)
+        return;
+      const unsigned realIndex = srcPanel.GetRealItemIndex(focusedItem);
+      if (realIndex == kParentIndex)
+        return;
+      indices.Add(realIndex);
+      destPath = srcPanel.GetItemName(realIndex);
+    }
+    else
+    {
+      srcPanel.Get_ItemIndices_OperSmart(indices);
+      if (indices.Size() == 0)
+        return;
+      destPath = destPanel.GetFsPath();
+      if (NumPanels == 1)
+        Reduce_Path_To_RealFileSystemPath(destPath);
+    }
+  }
+
+  UStringVector copyFolders;
+  ReadCopyHistory(copyFolders);
+
+  const bool useFullItemPaths = srcPanel.Is_IO_FS_Folder(); // maybe we need flat also here ??
+
+  {
+    CCopyDialog copyDialog;
+
+    copyDialog.Strings = copyFolders;
+    copyDialog.Value = destPath;
+    LangString(move ? IDS_MOVE : IDS_COPY, copyDialog.Title);
+    LangString(move ? IDS_MOVE_TO : IDS_COPY_TO, copyDialog.Static);
+    copyDialog.Info = srcPanel.GetItemsInfoString(indices);
+
+    if (copyDialog.Create(srcPanel.GetParent()) != IDOK)
+      return;
+
+    destPath = copyDialog.Value;
+  }
+
+  {
+    if (destPath.IsEmpty())
+    {
+      srcPanel.MessageBox_Error_UnsupportOperation();
+      return;
+    }
+
+    UString correctName;
+    if (!srcPanel.CorrectFsPath(destPath, correctName))
+    {
+      srcPanel.MessageBox_Error_HRESULT(E_INVALIDARG);
+      return;
+    }
+
+    if (IsAbsolutePath(destPath))
+      destPath.Empty();
+    else
+      destPath = srcPanel.GetFsPath();
+    destPath += correctName;
+
+#if defined(_WIN32) && !defined(UNDER_CE)
+    if (destPath.Len() > 0 && destPath[0] == '\\')
+      if (destPath.Len() == 1 || destPath[1] != '\\')
+      {
+        srcPanel.MessageBox_Error_UnsupportOperation();
+        return;
+      }
+#endif
+
+    bool possibleToUseDestPanel = false;
+
+    if (CompareFileNames(destPath, destPanel.GetFsPath()) == 0)
+    {
+      if (NumPanels == 1 || CompareFileNames(destPath, srcPanel.GetFsPath()) == 0)
+      {
+        srcPanel.MessageBox_Error(L"Cannot copy files onto itself");
+        return;
+      }
+
+      if (destPanel.DoesItSupportOperations())
+        possibleToUseDestPanel = true;
+    }
+
+    bool destIsFsPath = false;
+
+    if (possibleToUseDestPanel)
+    {
+      if (destPanel.IsFSFolder() || destPanel.IsAltStreamsFolder())
+        destIsFsPath = true;
+      else if (destPanel.IsFSDrivesFolder() || destPanel.IsRootFolder())
+      {
+        srcPanel.MessageBox_Error_UnsupportOperation();
+        return;
+      }
+    }
+    else
+    {
+      if (IsAltPathPrefix(us2fs(destPath)))
+      {
+        // we allow alt streams dest only to alt stream folder in second panel
+        srcPanel.MessageBox_Error_UnsupportOperation();
+        return;
+        /*
+        FString basePath = us2fs(destPath);
+        basePath.DeleteBack();
+        if (!DoesFileOrDirExist(basePath))
+        {
+          srcPanel.MessageBoxError2Lines(basePath, ERROR_FILE_NOT_FOUND); // GetLastError()
+          return;
+        }
+        destIsFsPath = true;
+        */
+      }
+      else
+      {
+        if (indices.Size() == 1 &&
+          !destPath.IsEmpty() && !IS_PATH_SEPAR(destPath.Back()))
+        {
+          int pos = destPath.ReverseFind_PathSepar();
+          if (pos < 0)
+          {
+            srcPanel.MessageBox_Error_UnsupportOperation();
+            return;
+          }
+          {
+            /*
+            #ifdef _WIN32
+            UString name = destPath.Ptr(pos + 1);
+            if (name.Find(L':') >= 0)
+            {
+              srcPanel.MessageBox_Error_UnsupportOperation();
+              return;
+            }
+            #endif
+            */
+            UString prefix = destPath.Left(pos + 1);
+            if (!CreateComplexDir(us2fs(prefix)))
+            {
+              const HRESULT lastError = GetLastError_noZero_HRESULT();
+              srcPanel.MessageBox_Error_2Lines_Message_HRESULT(prefix, lastError);
+              return;
+            }
+          }
+          // bool isFolder = srcPanael.IsItem_Folder(indices[0]);
+        }
+        else
+        {
+          NName::NormalizeDirPathPrefix(destPath);
+          if (!CreateComplexDir(us2fs(destPath)))
+          {
+            const HRESULT lastError = GetLastError_noZero_HRESULT();
+            srcPanel.MessageBox_Error_2Lines_Message_HRESULT(destPath, lastError);
+            return;
+          }
+        }
+        destIsFsPath = true;
+      }
+    }
+
+    if (!destIsFsPath)
+      useDestPanel = true;
+
+    AddUniqueStringToHeadOfList(copyFolders, destPath);
+    while (copyFolders.Size() > 20)
+      copyFolders.DeleteBack();
+    SaveCopyHistory(copyFolders);
+  }
+
+  bool useSrcPanel = !useDestPanel || !srcPanel.Is_IO_FS_Folder();
+
+  bool useTemp = useSrcPanel && useDestPanel;
+  if (useTemp && NumPanels == 1)
+  {
+    srcPanel.MessageBox_Error_UnsupportOperation();
+    return;
+  }
+
+  CTempDir tempDirectory;
+  FString tempDirPrefix;
+  if (useTemp)
+  {
+    tempDirectory.Create(kTempDirPrefix);
+    tempDirPrefix = tempDirectory.GetPath();
+    NFile::NName::NormalizeDirPathPrefix(tempDirPrefix);
+  }
+
+  CSelectedState srcSelState;
+  CSelectedState destSelState;
+  srcPanel.SaveSelectedState(srcSelState);
+  destPanel.SaveSelectedState(destSelState);
+
+  CPanel::CDisableNotify disableNotify1(destPanel);
+  CPanel::CDisableNotify disableNotify2(srcPanel);
+
+  HRESULT result = S_OK;
+
+  if (useSrcPanel)
+  {
+    CCopyToOptions options;
+    options.folder = useTemp ? fs2us(tempDirPrefix) : destPath;
+    options.moveMode = move;
+    options.includeAltStreams = true;
+    options.replaceAltStreamChars = false;
+    options.showErrorMessages = true;
+
+    result = srcPanel.CopyTo(options, indices, NULL);
+  }
+
+  if (result == S_OK && useDestPanel)
+  {
+    UStringVector filePaths;
+    UString folderPrefix;
+
+    if (useTemp)
+      folderPrefix = fs2us(tempDirPrefix);
+    else
+      folderPrefix = srcPanel.GetFsPath();
+
+    filePaths.ClearAndReserve(indices.Size());
+
+    FOR_VECTOR(i, indices)
+    {
+      UInt32 index = indices[i];
+      UString s;
+      if (useFullItemPaths)
+        s = srcPanel.GetItemRelPath2(index);
+      else
+        s = srcPanel.GetItemName_for_Copy(index);
+      filePaths.AddInReserved(s);
+    }
+
+    result = destPanel.CopyFrom(move, folderPrefix, filePaths, true, NULL);
+  }
+
+  if (result != S_OK)
+  {
+    // disableNotify1.Restore();
+    // disableNotify2.Restore();
+    // For Password:
+    // srcPanel.SetFocusToList();
+    // srcPanel.InvalidateList(NULL, true);
+
+    if (result != E_ABORT)
+      srcPanel.MessageBox_Error_HRESULT(result);
+    // return;
+  }
+
+  RefreshTitleAlways();
+
+  if (copyToSame || move)
+  {
+    srcPanel.RefreshListCtrl(srcSelState);
+  }
+
   if (!copyToSame)
   {
     destPanel.RefreshListCtrl(destSelState);

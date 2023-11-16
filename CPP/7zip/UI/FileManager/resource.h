@@ -44,6 +44,11 @@
 #define IDM_TOOLS                504
 #define IDM_HELP                 505
 
+#define IDM_MOUNT_TO             510
+#define IDM_NEW_FROM             511
+#define IDM_EXPAND_TO            512
+#define IDM_WIM_INFO             513
+
 #define IDM_OPEN                 540
 #define IDM_OPEN_INSIDE          541
 #define IDM_OPEN_OUTSIDE         542
