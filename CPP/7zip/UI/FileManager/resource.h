@@ -154,6 +154,8 @@
 #define IDS_CONFIRM_FILE_COPY           6010
 #define IDS_WANT_TO_COPY_FILES          6011
 
+#define IDS_MOUNT_TO                    6020
+
 #define IDS_CONFIRM_FILE_DELETE         6100
 #define IDS_CONFIRM_FOLDER_DELETE       6101
 #define IDS_CONFIRM_ITEMS_DELETE        6102

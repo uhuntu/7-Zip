@@ -917,8 +917,8 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
     copyDialog.Strings = copyFolders;
     copyDialog.Value = destPath;
-    LangString(move ? IDS_MOVE : IDS_COPY, copyDialog.Title);
-    LangString(move ? IDS_MOVE_TO : IDS_COPY_TO, copyDialog.Static);
+    LangString(move ? IDS_MOVE : IDS_MOUNT, copyDialog.Title);
+    LangString(move ? IDS_MOVE_TO : IDS_MOUNT_TO, copyDialog.Static);
     copyDialog.Info = srcPanel.GetItemsInfoString(indices);
 
     if (copyDialog.Create(srcPanel.GetParent()) != IDOK)

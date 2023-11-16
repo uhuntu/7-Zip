@@ -206,6 +206,7 @@ BEGIN
   IDS_MOVE      "Move"
   IDS_COPY_TO   "Copy to:"
   IDS_MOVE_TO   "Move to:"
+  IDS_MOUNT_TO  "Mount to:"
   IDS_COPYING   "Copying..."
   IDS_MOVING    "Moving..."
   IDS_RENAMING  "Renaming..."
