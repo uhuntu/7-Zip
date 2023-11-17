@@ -58,10 +58,10 @@ static void AddSizePair(UString &s, UINT resourceID, UInt64 value)
 
 static void AddGuidPair(UString& s, UINT resourceID, FString guid)
 {
-    AddLangString(s, resourceID);
-    s += ": ";
-    AddGuidValue(s, guid);
-    s.Add_LF();
+  AddLangString(s, resourceID);
+  s += ": ";
+  AddGuidValue(s, guid);
+  s.Add_LF();
 }
 
 #endif
@@ -69,12 +69,14 @@ static void AddGuidPair(UString& s, UINT resourceID, FString guid)
 class CThreadExtracting: public CProgressThreadVirt
 {
   HRESULT ProcessVirt() Z7_override;
+
 public:
   /*
   #ifdef Z7_EXTERNAL_CODECS
   const CExternalCodecs *externalCodecs;
   #endif
   */
+  HRESULT ProcessExtract();
 
   CCodecs *codecs;
   CExtractCallbackImp *ExtractCallbackSpec;
@@ -105,6 +107,12 @@ void CThreadExtracting::ProcessWasFinished_GuiVirt()
     ShowHashResults(Pairs, *this);
 }
 #endif
+
+HRESULT CThreadExtracting::ProcessExtract()
+{
+  Result = ProcessVirt();
+  return Result;
+}
 
 HRESULT CThreadExtracting::ProcessVirt()
 {
@@ -149,6 +157,7 @@ HRESULT CThreadExtracting::ProcessVirt()
       AddValuePair(s, IDS_ARCHIVES_COLON, Stat.NumArchives, false);
       AddSizePair(s, IDS_PROP_PACKED_SIZE, Stat.PackSize);
       AddGuidPair(s, IDS_PROP_WIM_GUID, Stat.WimGuid);
+      AddGuidPair(Pairs, IDS_PROP_WIM_GUID, Stat.WimGuid);
 
       if (Stat.NumFolders != 0)
         AddValuePair(s, IDS_PROP_FOLDERS, Stat.NumFolders);
@@ -300,7 +309,24 @@ HRESULT ExtractGUI(
 
   extracter.IconID = IDI_ICON;
 
-  RINOK(extracter.Create(title, hwndParent))
-  messageWasDisplayed = extracter.ThreadFinishedOK && extracter.MessagesDisplayed;
+  if (options.TestMode && !showDialog) {
+    extracter.ProcessExtract();
+  }
+  else {
+    RINOK(extracter.Create(title, hwndParent))
+    messageWasDisplayed = extracter.ThreadFinishedOK && extracter.MessagesDisplayed;
+  }
+
+  CPropNameValPairs propPairs = extracter.Pairs;
+
+  FOR_VECTOR(i, propPairs)
+  {
+    const CProperty& pair = propPairs[i];
+    UString name = pair.Name;
+    UString value = pair.Value;
+    extractCallback->WimGuid = value;
+    options.WimGuid = value;
+  }
+
   return extracter.Result;
 }

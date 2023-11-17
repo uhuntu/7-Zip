@@ -866,6 +866,8 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   CPanel& srcPanel = Panels[srcPanelIndex];
   CPanel& destPanel = Panels[destPanelIndex];
 
+  FString guid = srcPanel.GuidArchives();
+
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
   CPanel::CDisableTimerProcessing disableTimerProcessing2(srcPanel);
 

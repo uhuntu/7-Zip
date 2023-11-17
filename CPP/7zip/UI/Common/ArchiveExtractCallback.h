@@ -456,7 +456,7 @@ public:
    #endif
     _keepAndReplaceEmptyDirPrefixes = keepAndReplaceEmptyDirPrefixes;
     NumFolders = NumFiles = NumAltStreams = UnpackSize = AltStreams_UnpackSize = 0;
-    WimGuid = "test";
+    WimGuid = L"null";
   }
 
   #ifndef Z7_SFX

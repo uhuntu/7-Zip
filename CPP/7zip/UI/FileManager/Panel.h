@@ -921,6 +921,7 @@ public:
   void GetFilePaths(const CRecordVector<UInt32> &indices, UStringVector &paths) const;
   void ExtractArchives();
   void TestArchives();
+  FString GuidArchives();
 
 
   HRESULT CopyTo(CCopyToOptions &options,
