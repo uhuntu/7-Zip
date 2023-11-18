@@ -909,6 +909,8 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
     }
   }
 
+  destPath = guid;
+
   UStringVector copyFolders;
   ReadCopyHistory(copyFolders);
 
