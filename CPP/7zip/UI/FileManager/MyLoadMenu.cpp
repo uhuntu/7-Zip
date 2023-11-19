@@ -424,6 +424,7 @@ void OnMenuActivating(HWND /* hWnd */, HMENU hMenu, int position)
     menu.CheckItemByID(IDM_VIEW_TWO_PANELS, g_App.NumPanels == 2);
     menu.CheckItemByID(IDM_VIEW_FLAT_VIEW, g_App.GetFlatMode());
     menu.CheckItemByID(IDM_VIEW_ARCHIVE_TOOLBAR, g_App.ShowArchiveToolbar);
+    menu.CheckItemByID(IDM_VIEW_WIMDISM_TOOLBAR, g_App.ShowWimDismToolbar);
     menu.CheckItemByID(IDM_VIEW_STANDARD_TOOLBAR, g_App.ShowStandardToolbar);
     menu.CheckItemByID(IDM_VIEW_TOOLBARS_LARGE_BUTTONS, g_App.LargeButtons);
     menu.CheckItemByID(IDM_VIEW_TOOLBARS_SHOW_BUTTONS_TEXT, g_App.ShowButtonsLables);
@@ -711,6 +712,25 @@ void CFileMenu::Load(HMENU hMenu, unsigned startPos)
   destMenu.RemoveAllItemsFrom(numRealItems);
 }
 
+bool ExecuteDismCommand(unsigned id)
+{
+	if (id >= kMenuCmdID_Plugin_Start)
+	{
+		g_App.GetFocusedPanel().InvokePluginCommand(id);
+		g_App.GetFocusedPanel()._sevenZipContextMenu.Release();
+		g_App.GetFocusedPanel()._systemContextMenu.Release();
+		return true;
+	}
+
+  switch (id)
+  {
+    // Dism
+    case IDM_MOUNT_TO: g_App.MountTo(); break;
+    default: return false;
+  }
+	return true;
+}
+
 bool ExecuteFileCommand(unsigned id)
 {
   if (id >= kMenuCmdID_Plugin_Start)
@@ -874,6 +894,7 @@ bool OnMenuCommand(HWND hWnd, unsigned id)
     case IDM_VIEW_TWO_PANELS:       g_App.SwitchOnOffOnePanel(); break;
     case IDM_VIEW_STANDARD_TOOLBAR: g_App.SwitchStandardToolbar(); break;
     case IDM_VIEW_ARCHIVE_TOOLBAR:  g_App.SwitchArchiveToolbar(); break;
+    case IDM_VIEW_WIMDISM_TOOLBAR:  g_App.SwitchWimDismToolbar(); break;
 
     case IDM_VIEW_TOOLBARS_SHOW_BUTTONS_TEXT: g_App.SwitchButtonsLables(); break;
     case IDM_VIEW_TOOLBARS_LARGE_BUTTONS:     g_App.SwitchLargeButtons(); break;
@@ -915,4 +936,12 @@ bool OnMenuCommand(HWND hWnd, unsigned id)
     }
   }
   return true;
+}
+
+bool OnDismCommand(unsigned id)
+{
+  if (ExecuteDismCommand(id))
+    return true;
+
+  return false;
 }

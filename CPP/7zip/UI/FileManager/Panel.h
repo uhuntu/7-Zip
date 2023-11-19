@@ -66,6 +66,7 @@ DECLARE_INTERFACE(CPanelCallback)
 {
   virtual void OnTab() = 0;
   virtual void SetFocusToPath(unsigned index) = 0;
+  virtual void OnMount(bool move, bool copyToSame) = 0;
   virtual void OnCopy(bool move, bool copyToSame) = 0;
   virtual void OnSetSameFolder() = 0;
   virtual void OnSetSubFolder() = 0;
@@ -920,6 +921,7 @@ public:
   void GetFilePaths(const CRecordVector<UInt32> &indices, UStringVector &paths) const;
   void ExtractArchives();
   void TestArchives();
+  FString GuidArchives();
 
 
   HRESULT CopyTo(CCopyToOptions &options,

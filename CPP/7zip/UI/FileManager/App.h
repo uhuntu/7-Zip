@@ -21,6 +21,7 @@ extern bool g_IsSmallScreen;
 // must be larger than context menu IDs
 const int kMenuCmdID_Toolbar_Start = 1070;
 const int kMenuCmdID_Plugin_Start = 1100;
+const int kMenuCmdID_WimDism_Start = 1080;
 
 enum
 {
@@ -28,6 +29,15 @@ enum
   kMenuCmdID_Toolbar_Extract,
   kMenuCmdID_Toolbar_Test,
   kMenuCmdID_Toolbar_End
+};
+
+enum
+{
+  kMenuCmdID_WimDism_Mount = kMenuCmdID_WimDism_Start,
+  kMenuCmdID_WimDism_New,
+  kMenuCmdID_WimDism_Expand,
+  kMenuCmdID_WimDism_WimInfo,
+  kMenuCmdID_WimDism_End
 };
 
 class CPanelCallbackImp Z7_final: public CPanelCallback
@@ -42,6 +52,7 @@ public:
   }
   virtual void OnTab() Z7_override;
   virtual void SetFocusToPath(unsigned index) Z7_override;
+  virtual void OnMount(bool move, bool copyToSame) Z7_override;
   virtual void OnCopy(bool move, bool copyToSame) Z7_override;
   virtual void OnSetSameFolder() Z7_override;
   virtual void OnSetSubFolder() Z7_override;
@@ -66,6 +77,7 @@ public:
 
   bool ShowStandardToolbar;
   bool ShowArchiveToolbar;
+  bool ShowWimDismToolbar;
   bool ShowButtonsLables;
   bool LargeButtons;
 
@@ -101,6 +113,7 @@ public:
   void DragBegin(unsigned panelIndex);
   void DragEnd();
   
+  void OnMount(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnSetSameFolder(unsigned srcPanelIndex);
   void OnSetSubFolder(unsigned srcPanelIndex);
@@ -123,6 +136,7 @@ public:
   void OpenItemOutside() { GetFocusedPanel().OpenSelectedItems(false); }
   void EditItem(bool useEditor) { GetFocusedPanel().EditItem(useEditor); }
   void Rename() { GetFocusedPanel().RenameFile(); }
+  void MountTo() { OnMount(false, false, GetFocusedPanelIndex()); }
   void CopyTo() { OnCopy(false, false, GetFocusedPanelIndex()); }
   void MoveTo() { OnCopy(true, false, GetFocusedPanelIndex()); }
   void Delete(bool toRecycleBin) { GetFocusedPanel().DeleteItems(toRecycleBin); }
@@ -246,7 +260,7 @@ public:
     {
       ShowButtonsLables = !g_IsSmallScreen;
       LargeButtons = false;
-      ShowStandardToolbar = ShowArchiveToolbar = true;
+      ShowStandardToolbar = ShowArchiveToolbar = ShowWimDismToolbar = true;
     }
     else
     {
@@ -254,6 +268,7 @@ public:
       LargeButtons = ((mask & 2) != 0);
       ShowStandardToolbar = ((mask & 4) != 0);
       ShowArchiveToolbar  = ((mask & 8) != 0);
+      ShowWimDismToolbar  = ((mask & 16) != 0);
     }
   }
   void SaveToolbar()
@@ -263,6 +278,7 @@ public:
     if (LargeButtons) mask |= 2;
     if (ShowStandardToolbar) mask |= 4;
     if (ShowArchiveToolbar) mask |= 8;
+    if (ShowWimDismToolbar) mask |= 16;
     SaveToolbarsMask(mask);
   }
   
@@ -276,6 +292,11 @@ public:
   void SwitchArchiveToolbar()
   {
     ShowArchiveToolbar = !ShowArchiveToolbar;
+    SaveToolbarChanges();
+  }
+  void SwitchWimDismToolbar()
+  {
+    ShowWimDismToolbar = !ShowWimDismToolbar;
     SaveToolbarChanges();
   }
   void SwitchButtonsLables()
@@ -292,6 +313,7 @@ public:
   void AddToArchive() { GetFocusedPanel().AddToArchive(); }
   void ExtractArchives() { GetFocusedPanel().ExtractArchives(); }
   void TestArchives() { GetFocusedPanel().TestArchives(); }
+  FString GuidArchives() { return GetFocusedPanel().GuidArchives(); }
 
   void OnNotify(int ctrlID, LPNMHDR pnmh);
 

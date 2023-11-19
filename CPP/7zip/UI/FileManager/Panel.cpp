@@ -1180,3 +1180,41 @@ void CPanel::TestArchives()
   }
   ::TestArchives(paths);
 }
+
+FString CPanel::GuidArchives()
+{
+  CRecordVector<UInt32> indices;
+  Get_ItemIndices_OperSmart(indices);
+  CMyComPtr<IArchiveFolder> archiveFolder;
+  _folder.QueryInterface(IID_IArchiveFolder, &archiveFolder);
+  if (archiveFolder)
+  {
+    CCopyToOptions options;
+    options.streamMode = true;
+    options.showErrorMessages = true;
+    options.testMode = true;
+
+    UStringVector messages;
+    HRESULT res = CopyTo(options, indices, &messages);
+    if (res != S_OK)
+    {
+      if (res != E_ABORT)
+        MessageBox_Error_HRESULT(res);
+    }
+    return L"null";
+  }
+
+  if (!IsFSFolder())
+  {
+    MessageBox_Error_UnsupportOperation();
+    return L"null";
+  }
+  UStringVector paths;
+  GetFilePaths(indices, paths);
+  if (paths.IsEmpty())
+  {
+    MessageBox_Error_LangID(IDS_SELECT_FILES);
+    return L"null";
+  }
+  return ::GuidArchives(paths);
+}

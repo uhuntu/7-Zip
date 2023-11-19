@@ -48,6 +48,8 @@ struct CExtractOptions: public CExtractOptionsBase
   bool StdOutMode;
   bool YesToAll;
   bool TestMode;
+
+  FString WimGuid;
   
   // bool ShowDialog;
   // bool PasswordEnabled;
@@ -66,7 +68,8 @@ struct CExtractOptions: public CExtractOptionsBase
       StdInMode(false),
       StdOutMode(false),
       YesToAll(false),
-      TestMode(false)
+      TestMode(false),
+      WimGuid(L"null")
       {}
 };
 
@@ -80,9 +83,12 @@ struct CDecompressStat
   UInt64 NumFiles;
   UInt64 NumAltStreams;
 
+  FString WimGuid;
+
   void Clear()
   {
     NumArchives = UnpackSize = AltStreams_UnpackSize = PackSize = NumFolders = NumFiles = NumAltStreams = 0;
+    WimGuid = L"null";
   }
 };
 

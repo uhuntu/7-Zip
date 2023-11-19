@@ -102,3 +102,5 @@
 #define IDS_PROP_DEVICE_MINOR     1102
 #define IDS_PROP_DEV_MAJOR        1103
 #define IDS_PROP_DEV_MINOR        1104
+
+#define IDS_PROP_WIM_GUID         1200

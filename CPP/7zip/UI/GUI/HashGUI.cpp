@@ -65,6 +65,12 @@ void AddValuePair(CPropNameValPairs &pairs, UINT resourceID, UInt64 value)
   pair.Value = sz;
 }
 
+void AddGuidPair(CPropNameValPairs& pairs, UINT resourceID, FString guid)
+{
+  CProperty& pair = pairs.AddNew();
+  AddLangString(pair.Name, resourceID);
+  pair.Value = guid;
+}
 
 void AddSizeValue(UString &s, UInt64 value)
 {
@@ -86,6 +92,11 @@ void AddSizeValue(UString &s, UInt64 value)
     s += (wchar_t)c;
     s += "iB)";
   }
+}
+
+void AddGuidValue(UString& s, FString guid)
+{
+    s += guid;
 }
 
 void AddSizeValuePair(CPropNameValPairs &pairs, UINT resourceID, UInt64 value)

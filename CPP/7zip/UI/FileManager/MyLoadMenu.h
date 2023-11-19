@@ -7,6 +7,7 @@ void OnMenuActivating(HWND hWnd, HMENU hMenu, int position);
 // void OnMenuUnActivating(HWND hWnd, HMENU hMenu, int id);
 // void OnMenuUnActivating(HWND hWnd);
 
+bool OnDismCommand(unsigned id);
 bool OnMenuCommand(HWND hWnd, unsigned id);
 void MyLoadMenu(bool needResetMenu);
 
@@ -36,5 +37,6 @@ struct CFileMenu
 };
 
 bool ExecuteFileCommand(unsigned id);
+bool ExecuteDismCommand(unsigned id);
 
 #endif

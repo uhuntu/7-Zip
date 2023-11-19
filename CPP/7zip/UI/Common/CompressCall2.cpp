@@ -246,6 +246,18 @@ void TestArchives(const UStringVector &arcPaths, bool hashMode)
       hashMode ? "hash" : NULL);
 }
 
+FString GuidArchives(const UStringVector& arcPaths, bool hashMode)
+{
+  CExtractOptions eo;
+  eo.TestMode = true;
+  ExtractGroupCommand(arcPaths,
+    false, // showDialog
+    eo,
+    hashMode ? "hash" : NULL);
+
+  return eo.WimGuid;
+}
+
 void CalcChecksum(const UStringVector &paths,
     const UString &methodName,
     const UString &arcPathPrefix,

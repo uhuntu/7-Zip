@@ -15,7 +15,9 @@ HRESULT HashCalcGUI(
 typedef CObjectVector<CProperty> CPropNameValPairs;
 
 void AddValuePair(CPropNameValPairs &pairs, UINT resourceID, UInt64 value);
+void AddGuidPair(CPropNameValPairs& pairs, UINT resourceID, FString guid);
 void AddSizeValue(UString &s, UInt64 value);
+void AddGuidValue(UString& s, FString guid);
 void AddSizeValuePair(CPropNameValPairs &pairs, UINT resourceID, UInt64 value);
 
 void AddHashBundleRes(CPropNameValPairs &s, const CHashBundle &hb);

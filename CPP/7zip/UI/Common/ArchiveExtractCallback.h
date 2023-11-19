@@ -436,6 +436,7 @@ public:
   UInt64 AltStreams_UnpackSize;
   
   FString DirPathPrefix_for_HashFiles;
+  FString WimGuid;
 
   CArchiveExtractCallback();
 
@@ -455,6 +456,7 @@ public:
    #endif
     _keepAndReplaceEmptyDirPrefixes = keepAndReplaceEmptyDirPrefixes;
     NumFolders = NumFiles = NumAltStreams = UnpackSize = AltStreams_UnpackSize = 0;
+    WimGuid = L"null";
   }
 
   #ifndef Z7_SFX

@@ -111,6 +111,7 @@ BEGIN
     BEGIN
       MENUITEM "Archive Toolbar",           IDM_VIEW_ARCHIVE_TOOLBAR
       MENUITEM "Standard Toolbar",          IDM_VIEW_STANDARD_TOOLBAR
+      MENUITEM "WimDism Toolbar",           IDM_VIEW_WIMDISM_TOOLBAR
       MY_MENUITEM_SEPARATOR
       MENUITEM "Large Buttons",             IDM_VIEW_TOOLBARS_LARGE_BUTTONS
       MENUITEM "Show Buttons Text",         IDM_VIEW_TOOLBARS_SHOW_BUTTONS_TEXT
@@ -162,6 +163,10 @@ IDI_ICON  ICON  "../../UI/FileManager/FM.ico"
 IDB_ADD        BITMAP  "../../UI/FileManager/Add.bmp"
 IDB_EXTRACT    BITMAP  "../../UI/FileManager/Extract.bmp"
 IDB_TEST       BITMAP  "../../UI/FileManager/Test.bmp"
+IDB_MOUNT      BITMAP  "../../UI/FileManager/Mount.bmp"
+IDB_NEW        BITMAP  "../../UI/FileManager/New.bmp"
+IDB_EXPAND     BITMAP  "../../UI/FileManager/Expand.bmp"
+IDB_WIMINFO    BITMAP  "../../UI/FileManager/WimInfo.bmp"
 IDB_COPY       BITMAP  "../../UI/FileManager/Copy.bmp"
 IDB_MOVE       BITMAP  "../../UI/FileManager/Move.bmp"
 IDB_DELETE     BITMAP  "../../UI/FileManager/Delete.bmp"
@@ -169,6 +174,10 @@ IDB_INFO       BITMAP  "../../UI/FileManager/Info.bmp"
 IDB_ADD2       BITMAP  "../../UI/FileManager/Add2.bmp"
 IDB_EXTRACT2   BITMAP  "../../UI/FileManager/Extract2.bmp"
 IDB_TEST2      BITMAP  "../../UI/FileManager/Test2.bmp"
+IDB_MOUNT2     BITMAP  "../../UI/FileManager/Mount2.bmp"
+IDB_NEW2       BITMAP  "../../UI/FileManager/New2.bmp"
+IDB_EXPAND2    BITMAP  "../../UI/FileManager/Expand2.bmp"
+IDB_WIMINFO2   BITMAP  "../../UI/FileManager/WimInfo2.bmp"
 IDB_COPY2      BITMAP  "../../UI/FileManager/Copy2.bmp"
 IDB_MOVE2      BITMAP  "../../UI/FileManager/Move2.bmp"
 IDB_DELETE2    BITMAP  "../../UI/FileManager/Delete2.bmp"
@@ -197,6 +206,7 @@ BEGIN
   IDS_MOVE      "Move"
   IDS_COPY_TO   "Copy to:"
   IDS_MOVE_TO   "Move to:"
+  IDS_MOUNT_TO  "Mount to:"
   IDS_COPYING   "Copying..."
   IDS_MOVING    "Moving..."
   IDS_RENAMING  "Renaming..."
@@ -242,6 +252,10 @@ BEGIN
   IDS_ADD            "Add"
   IDS_EXTRACT        "Extract"
   IDS_TEST           "Test"
+  IDS_MOUNT          "Mount"
+  IDS_NEW            "New"
+  IDS_EXPAND         "Expand"
+  IDS_WIMINFO        "WinInfo"
   IDS_BUTTON_COPY    "Copy"
   IDS_BUTTON_MOVE    "Move"
   IDS_BUTTON_DELETE  "Delete"

@@ -437,7 +437,7 @@ HRESULT Extract(
       ReadZoneFile_Of_BaseFile(us2fs(arcPath), ecs->ZoneBuf);
     }
    #endif
-    
+
 
     if (arcLink.Arcs.Size() != 0)
     {
@@ -526,6 +526,22 @@ HRESULT Extract(
     if (arc.MTime.Def)
       arc.MTime.Set_From_FiTime(fi.MTime);
 
+    IInArchive* archive = arc.Archive;
+    NCOM::CPropVariant prop;
+    if (archive->GetArchiveProperty(kpidName, &prop) == S_OK) {
+      BSTR bstr = prop.bstrVal;
+      if (bstr != NULL) {
+        ecs->WimGuid = prop.bstrVal;
+      }
+      else {
+        ecs->WimGuid = L"null";
+      }
+    }
+
+    if (ecs->WimGuid != L"null") {
+      goto _out_;
+    }
+
     UInt64 packProcessed;
     const bool calcCrc =
         #ifndef Z7_SFX
@@ -559,7 +575,10 @@ HRESULT Extract(
     RINOK(faeCallback->SetCompleted(&totalPackProcessed))
   }
 
+_out_:
+
   st.NumFolders = ecs->NumFolders;
+  st.WimGuid = ecs->WimGuid;
   st.NumFiles = ecs->NumFiles;
   st.NumAltStreams = ecs->NumAltStreams;
   st.UnpackSize = ecs->UnpackSize;

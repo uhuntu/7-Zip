@@ -806,6 +806,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       }
       if (OnMenuCommand(hWnd, wmId))
         return 0;
+      if (OnDismCommand(wmId))
+        return 0;
       break;
     }
     case WM_INITMENUPOPUP:

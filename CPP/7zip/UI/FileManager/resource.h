@@ -12,6 +12,11 @@
 #define IDB_DELETE   105
 #define IDB_INFO     106
 
+#define IDB_MOUNT    110
+#define IDB_NEW      111
+#define IDB_EXPAND   112
+#define IDB_WIMINFO  113
+
 #define IDB_ADD2     150
 #define IDB_EXTRACT2 151
 #define IDB_TEST2    152
@@ -19,6 +24,11 @@
 #define IDB_MOVE2    154
 #define IDB_DELETE2  155
 #define IDB_INFO2    156
+
+#define IDB_MOUNT2   170
+#define IDB_NEW2     171
+#define IDB_EXPAND2  172
+#define IDB_WIMINFO2 173
 
 #define IDM_HASH_ALL             101
 #define IDM_CRC32                102
@@ -33,6 +43,11 @@
 #define IDM_FAVORITES            503
 #define IDM_TOOLS                504
 #define IDM_HELP                 505
+
+#define IDM_MOUNT_TO             510
+#define IDM_NEW_FROM             511
+#define IDM_EXPAND_TO            512
+#define IDM_WIM_INFO             513
 
 #define IDM_OPEN                 540
 #define IDM_OPEN_INSIDE          541
@@ -95,6 +110,7 @@
 
 #define IDM_VIEW_ARCHIVE_TOOLBAR            750
 #define IDM_VIEW_STANDARD_TOOLBAR           751
+#define IDM_VIEW_WIMDISM_TOOLBAR            755
 #define IDM_VIEW_TOOLBARS_LARGE_BUTTONS     752
 #define IDM_VIEW_TOOLBARS_SHOW_BUTTONS_TEXT 753
 
@@ -138,6 +154,8 @@
 #define IDS_CONFIRM_FILE_COPY           6010
 #define IDS_WANT_TO_COPY_FILES          6011
 
+#define IDS_MOUNT_TO                    6020
+
 #define IDS_CONFIRM_FILE_DELETE         6100
 #define IDS_CONFIRM_FOLDER_DELETE       6101
 #define IDS_CONFIRM_ITEMS_DELETE        6102
@@ -178,6 +196,11 @@
 #define IDS_BUTTON_MOVE                 7204
 #define IDS_BUTTON_DELETE               7205
 #define IDS_BUTTON_INFO                 7206
+
+#define IDS_MOUNT                       7210
+#define IDS_NEW                         7211
+#define IDS_EXPAND                      7212
+#define IDS_WIMINFO                     7213
 
 #define IDS_SPLITTING                   7303
 #define IDS_SPLIT_CONFIRM_TITLE         7304
