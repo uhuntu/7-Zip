@@ -104,7 +104,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
   if (_xmls.Size() == 1)
   {
     const CWimXml &xml = _xmls[0];
-    if (xml.Images.Size() == 1)
+    if (xml.Images.Size() >= 1)
       image = &xml.Images[0];
   }
 
@@ -149,6 +149,14 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
       break;
 
     case kpidComment:
+    {
+      int index = value->uintVal;
+      if (_xmls.Size() == 1)
+      {
+        const CWimXml& xml = _xmls[0];
+        if (xml.Images.Size() >= 1)
+          image = &xml.Images[index];
+      }
       if (image)
       {
         if (_xmlInComments)
@@ -161,6 +169,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
           prop = image->Name;
       }
       break;
+    }
 
     case kpidUnpackVer:
     {
@@ -198,7 +207,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
       }
       break;
     case kpidNumVolumes: if (_volumes.Size() > 0) prop = (UInt32)(_volumes.Size() - 1); break;
-    
+
     case kpidClusterSize:
       if (_xmls.Size() > 0)
       {
@@ -229,7 +238,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
               s.Add_UInt32(h.PartNumber);
             ext = ".swm";
           }
-          s += ext;
+          //s += ext;
           prop = s;
         }
       }
@@ -255,7 +264,7 @@ Z7_COM7F_IMF(CHandler::GetArchiveProperty(PROPID propID, PROPVARIANT *value))
 
     case kpidNumImages: prop = (UInt32)_db.Images.Size(); break;
     case kpidBootImage: if (_bootIndex != 0) prop = (UInt32)_bootIndex; break;
-    
+
     case kpidMethod:
     {
       UInt32 methodUnknown = 0;

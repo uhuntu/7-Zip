@@ -8,6 +8,8 @@
 #include "../../../Windows/FileName.h"
 #include "../../../Windows/PropVariantConv.h"
 
+#include "DismApi.h"
+
 /*
 #include "Windows/COM.h"
 #include "Windows/Error.h"
@@ -866,7 +868,15 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   CPanel& srcPanel = Panels[srcPanelIndex];
   CPanel& destPanel = Panels[destPanelIndex];
 
-  FString guid = srcPanel.GuidArchives();
+  UStringVector mountImages;
+  FString guid = srcPanel.GuidArchives(mountImages);
+
+  unsigned j;
+  for (j = 0; j < mountImages.Size(); j++) {
+    FString test = L"\\";
+    FString prev = L"C:\\";
+    mountImages[j] = prev + guid + test + mountImages[j] + test;
+  }
 
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
   CPanel::CDisableTimerProcessing disableTimerProcessing2(srcPanel);
@@ -909,10 +919,12 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
     }
   }
 
-  destPath = guid;
+  destPath = mountImages[0];
 
   UStringVector copyFolders;
   ReadCopyHistory(copyFolders);
+
+  copyFolders = mountImages;
 
   const bool useFullItemPaths = srcPanel.Is_IO_FS_Folder(); // maybe we need flat also here ??
 

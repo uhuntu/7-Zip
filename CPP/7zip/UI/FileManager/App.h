@@ -313,7 +313,6 @@ public:
   void AddToArchive() { GetFocusedPanel().AddToArchive(); }
   void ExtractArchives() { GetFocusedPanel().ExtractArchives(); }
   void TestArchives() { GetFocusedPanel().TestArchives(); }
-  FString GuidArchives() { return GetFocusedPanel().GuidArchives(); }
 
   void OnNotify(int ctrlID, LPNMHDR pnmh);
 

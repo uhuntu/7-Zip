@@ -259,7 +259,11 @@ int Find_FileName_InSortedVector(const UStringVector &fileNames, const UString &
   return -1;
 }
 
-
+enum
+{
+  kpidNumImages = kpidUserDefined,
+  kpidBootImage
+};
 
 HRESULT Extract(
     // DECL_EXTERNAL_CODECS_LOC_VARS
@@ -283,6 +287,9 @@ HRESULT Extract(
   CRecordVector<UInt64> arcSizes;
 
   unsigned numArcs = options.StdInMode ? 1 : arcPaths.Size();
+
+  FString wimGuid;
+  UStringVector mountImages;
 
   unsigned i;
   
@@ -531,14 +538,32 @@ HRESULT Extract(
     if (archive->GetArchiveProperty(kpidName, &prop) == S_OK) {
       BSTR bstr = prop.bstrVal;
       if (bstr != NULL) {
-        ecs->WimGuid = prop.bstrVal;
+        wimGuid = prop.bstrVal;
       }
       else {
-        ecs->WimGuid = L"null";
+        wimGuid = L"null";
       }
     }
 
-    if (ecs->WimGuid != L"null") {
+    UINT numImages = 0;
+    prop.Clear();
+    if (archive->GetArchiveProperty(kpidNumImages, &prop) == S_OK) {
+      numImages = prop.uintVal;
+    }
+
+
+    for (i = 0; i < numImages; i++) {
+      prop.Clear();
+      prop.uintVal = i;
+      if (archive->GetArchiveProperty(kpidComment, &prop) == S_OK) {
+        BSTR imageName = prop.bstrVal;
+        if (imageName != NULL) {
+          mountImages.Add(imageName);
+        }
+      }
+    }
+
+    if (wimGuid != L"null") {
       goto _out_;
     }
 
@@ -578,7 +603,8 @@ HRESULT Extract(
 _out_:
 
   st.NumFolders = ecs->NumFolders;
-  st.WimGuid = ecs->WimGuid;
+  st.WimGuid = wimGuid;
+  st.MountImages = mountImages;
   st.NumFiles = ecs->NumFiles;
   st.NumAltStreams = ecs->NumAltStreams;
   st.UnpackSize = ecs->UnpackSize;

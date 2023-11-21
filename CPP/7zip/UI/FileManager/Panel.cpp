@@ -1181,7 +1181,7 @@ void CPanel::TestArchives()
   ::TestArchives(paths);
 }
 
-FString CPanel::GuidArchives()
+FString CPanel::GuidArchives(UStringVector &mountImages)
 {
   CRecordVector<UInt32> indices;
   Get_ItemIndices_OperSmart(indices);
@@ -1216,5 +1216,7 @@ FString CPanel::GuidArchives()
     MessageBox_Error_LangID(IDS_SELECT_FILES);
     return L"null";
   }
-  return ::GuidArchives(paths);
+  FString guid = ::GuidArchives(paths);
+  mountImages = paths;
+  return guid;
 }

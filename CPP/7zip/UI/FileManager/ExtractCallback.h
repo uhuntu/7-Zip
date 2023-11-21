@@ -261,8 +261,6 @@ public:
   UString Password;
   #endif
 
-  FString WimGuid;
-
   UString _lang_Extracting;
   UString _lang_Testing;
   UString _lang_Skipping;
@@ -286,8 +284,7 @@ public:
     #endif
     _totalFilesDefined(false),
     _totalBytesDefined(false),
-    MultiArcMode(false),
-    WimGuid(L"null")
+    MultiArcMode(false)
     {}
    
   ~CExtractCallbackImp();

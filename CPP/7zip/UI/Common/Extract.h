@@ -50,7 +50,8 @@ struct CExtractOptions: public CExtractOptionsBase
   bool TestMode;
 
   FString WimGuid;
-  
+  UStringVector MountImages;
+
   // bool ShowDialog;
   // bool PasswordEnabled;
   // UString Password;
@@ -70,7 +71,9 @@ struct CExtractOptions: public CExtractOptionsBase
       YesToAll(false),
       TestMode(false),
       WimGuid(L"null")
-      {}
+  {
+    MountImages.Clear();
+  }
 };
 
 struct CDecompressStat
@@ -84,11 +87,13 @@ struct CDecompressStat
   UInt64 NumAltStreams;
 
   FString WimGuid;
+  UStringVector MountImages;
 
   void Clear()
   {
     NumArchives = UnpackSize = AltStreams_UnpackSize = PackSize = NumFolders = NumFiles = NumAltStreams = 0;
     WimGuid = L"null";
+    MountImages.Clear();
   }
 };
 

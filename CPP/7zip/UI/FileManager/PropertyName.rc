@@ -11,6 +11,7 @@ BEGIN
   IDS_PROP_SIZE         "Size"
   IDS_PROP_PACKED_SIZE  "Packed Size"
   IDS_PROP_WIM_GUID     "Wim Guid"
+  IDS_PROP_IMAGE_NAME   "Image Name"
   IDS_PROP_ATTRIBUTES   "Attributes"
   IDS_PROP_CTIME        "Created"
   IDS_PROP_ATIME        "Accessed"

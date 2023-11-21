@@ -140,8 +140,16 @@ HRESULT CThreadExtracting::ProcessVirt()
       #endif
       FinalMessage.ErrorMessage.Message, Stat);
   
+  unsigned i;
+
   if (res == S_OK) {
     AddGuidPair(Pairs, IDS_PROP_WIM_GUID, Stat.WimGuid);
+    for (i = 0; i < Stat.MountImages.Size(); i++) {
+      wchar_t ii[10];
+      ConvertUInt32ToString(i, ii);
+      FString test = L" - ";
+      AddGuidPair(Pairs, IDS_PROP_IMAGE_NAME, ii + test + Stat.MountImages[i]);
+    }
   }
 
 #ifndef Z7_SFX
@@ -324,10 +332,12 @@ HRESULT ExtractGUI(
   FOR_VECTOR(i, propPairs)
   {
     const CProperty& pair = propPairs[i];
-    UString name = pair.Name;
-    UString value = pair.Value;
-    extractCallback->WimGuid = value;
-    options.WimGuid = value;
+    if (pair.Name == LangString(IDS_PROP_WIM_GUID)) {
+      options.WimGuid = pair.Value;
+    }
+    if (pair.Name == LangString(IDS_PROP_IMAGE_NAME)) {
+      options.MountImages.Add(pair.Value);
+    }
   }
 
   return extracter.Result;

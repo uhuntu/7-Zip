@@ -104,3 +104,4 @@
 #define IDS_PROP_DEV_MINOR        1104
 
 #define IDS_PROP_WIM_GUID         1200
+#define IDS_PROP_IMAGE_NAME       1201

@@ -246,7 +246,7 @@ void TestArchives(const UStringVector &arcPaths, bool hashMode)
       hashMode ? "hash" : NULL);
 }
 
-FString GuidArchives(const UStringVector& arcPaths, bool hashMode)
+FString GuidArchives(UStringVector& arcPaths, bool hashMode)
 {
   CExtractOptions eo;
   eo.TestMode = true;
@@ -254,7 +254,7 @@ FString GuidArchives(const UStringVector& arcPaths, bool hashMode)
     false, // showDialog
     eo,
     hashMode ? "hash" : NULL);
-
+  arcPaths = eo.MountImages;
   return eo.WimGuid;
 }
 
