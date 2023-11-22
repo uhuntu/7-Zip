@@ -53,8 +53,8 @@ Z7_CLASS_IMP_CHandler_IInArchive_5(
 
   void InitDefaults()
   {
-    _set_use_ShowImageNumber = false;
-    _set_showImageNumber = false;
+    _set_use_ShowImageNumber = true;
+    _set_showImageNumber = true;
     _defaultImageNumber = -1;
     _timeOptions.Init();
   }
