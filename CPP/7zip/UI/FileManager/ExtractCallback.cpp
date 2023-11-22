@@ -790,6 +790,103 @@ Z7_COM7F_IMF(CExtractCallbackImp::AskWrite(
   return StringToBstr(destPathResultTemp, destPathResult);
 }
 
+Z7_COM7F_IMF(CExtractCallbackImp::AskMount(
+  const wchar_t* srcPath, Int32 srcIsFolder,
+  const FILETIME* srcTime, const UInt64* srcSize,
+  const wchar_t* destPath,
+  BSTR* destPathResult,
+  Int32* writeAnswer))
+{
+  UString destPathResultTemp = destPath;
+
+  // RINOK(StringToBstr(destPath, destPathResult));
+
+  *destPathResult = NULL;
+  *writeAnswer = BoolToInt(false);
+
+  FString destPathSys = us2fs(destPath);
+  const bool srcIsFolderSpec = IntToBool(srcIsFolder);
+  CFileInfo destFileInfo;
+
+  if (destFileInfo.Find(destPathSys))
+  {
+    if (srcIsFolderSpec)
+    {
+      if (!destFileInfo.IsDir())
+      {
+        RINOK(MessageError("Cannot replace file with folder with same name", destPathSys))
+          return E_ABORT;
+      }
+      *writeAnswer = BoolToInt(false);
+      return S_OK;
+    }
+
+    if (destFileInfo.IsDir())
+    {
+      RINOK(MessageError("Cannot replace folder with file with same name", destPathSys))
+        * writeAnswer = BoolToInt(false);
+      return S_OK;
+    }
+
+    switch ((int)OverwriteMode)
+    {
+    case NExtract::NOverwriteMode::kSkip:
+      return S_OK;
+    case NExtract::NOverwriteMode::kAsk:
+    {
+      Int32 overwriteResult;
+      UString destPathSpec = destPath;
+      const int slashPos = destPathSpec.ReverseFind_PathSepar();
+      destPathSpec.DeleteFrom((unsigned)(slashPos + 1));
+      destPathSpec += fs2us(destFileInfo.Name);
+
+      RINOK(AskOverwrite(
+        destPathSpec,
+        &destFileInfo.MTime, &destFileInfo.Size,
+        srcPath,
+        srcTime, srcSize,
+        &overwriteResult))
+
+        switch (overwriteResult)
+        {
+        case NOverwriteAnswer::kCancel: return E_ABORT;
+        case NOverwriteAnswer::kNo: return S_OK;
+        case NOverwriteAnswer::kNoToAll: OverwriteMode = NExtract::NOverwriteMode::kSkip; return S_OK;
+        case NOverwriteAnswer::kYes: break;
+        case NOverwriteAnswer::kYesToAll: OverwriteMode = NExtract::NOverwriteMode::kOverwrite; break;
+        case NOverwriteAnswer::kAutoRename: OverwriteMode = NExtract::NOverwriteMode::kRename; break;
+        default:
+          return E_FAIL;
+        }
+      break;
+    }
+    default:
+      break;
+    }
+
+    if (OverwriteMode == NExtract::NOverwriteMode::kRename)
+    {
+      if (!AutoRenamePath(destPathSys))
+      {
+        RINOK(MessageError("Cannot create name for file", destPathSys))
+          return E_ABORT;
+      }
+      destPathResultTemp = fs2us(destPathSys);
+    }
+    else
+    {
+      if (NFind::DoesFileExist_Raw(destPathSys))
+        if (!NDir::DeleteFileAlways(destPathSys))
+          if (GetLastError() != ERROR_FILE_NOT_FOUND)
+          {
+            RINOK(MessageError("Cannot delete output file", destPathSys))
+              return E_ABORT;
+          }
+    }
+  }
+  *writeAnswer = BoolToInt(true);
+  return StringToBstr(destPathResultTemp, destPathResult);
+}
 
 Z7_COM7F_IMF(CExtractCallbackImp::UseExtractToStream(Int32 *res))
 {

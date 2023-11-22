@@ -480,6 +480,99 @@ Z7_COM7F_IMF(CFSDrives::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
   return S_OK;
 }
 
+Z7_COM7F_IMF(CFSDrives::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+  Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
+  const wchar_t* path, IFolderOperationsExtractCallback* callback))
+{
+  if (numItems == 0)
+    return S_OK;
+
+  if (moveMode)
+    return E_NOTIMPL;
+
+  if (!_volumeMode)
+    return E_NOTIMPL;
+
+  UInt64 totalSize = 0;
+  UInt32 i;
+  for (i = 0; i < numItems; i++)
+  {
+    const CDriveInfo& di = _drives[indices[i]];
+    if (di.KnownSize)
+      totalSize += di.DriveSize;
+  }
+  RINOK(callback->SetTotal(totalSize))
+    RINOK(callback->SetNumFiles(numItems))
+
+    FString destPath = us2fs(path);
+  if (destPath.IsEmpty())
+    return E_INVALIDARG;
+
+  bool isAltDest = NName::IsAltPathPrefix(destPath);
+  bool isDirectPath = (!isAltDest && !IsPathSepar(destPath.Back()));
+
+  if (isDirectPath)
+  {
+    if (numItems > 1)
+      return E_INVALIDARG;
+  }
+
+  UInt64 completedSize = 0;
+  RINOK(callback->SetCompleted(&completedSize))
+    for (i = 0; i < numItems; i++)
+    {
+      unsigned index = indices[i];
+      const CDriveInfo& di = _drives[index];
+      FString destPath2 = destPath;
+
+      if (!isDirectPath)
+      {
+        FString destName = di.Name;
+        if (!destName.IsEmpty() && destName.Back() == ':')
+        {
+          destName.DeleteBack();
+          AddExt(destName, index);
+        }
+        destPath2 += destName;
+      }
+
+      FString srcPath = di.GetDeviceFileIoName();
+
+      UInt64 fileSize = 0;
+      if (GetFileSize(index, fileSize) != S_OK)
+      {
+        return E_FAIL;
+      }
+      if (!di.KnownSize)
+      {
+        totalSize += fileSize;
+        RINOK(callback->SetTotal(totalSize))
+      }
+
+      Int32 writeAskResult;
+      CMyComBSTR destPathResult;
+      RINOK(callback->AskWrite(fs2us(srcPath), BoolToInt(false), NULL, &fileSize,
+        fs2us(destPath2), &destPathResult, &writeAskResult))
+
+        if (!IntToBool(writeAskResult))
+        {
+          if (totalSize >= fileSize)
+            totalSize -= fileSize;
+          RINOK(callback->SetTotal(totalSize))
+            continue;
+        }
+
+      RINOK(callback->SetCurrentFilePath(fs2us(srcPath)))
+
+        const UInt32 kBufferSize = (4 << 20);
+      const UInt32 bufferSize = (di.DriveType == DRIVE_REMOVABLE) ? (18 << 10) * 4 : kBufferSize;
+      RINOK(CopyFileSpec(srcPath, us2fs(destPathResult), false, fileSize, bufferSize, completedSize, callback))
+        completedSize += fileSize;
+    }
+
+  return S_OK;
+}
+
 Z7_COM7F_IMF(CFSDrives::CopyFrom(Int32 /* moveMode */, const wchar_t * /* fromFolderPath */,
     const wchar_t * const * /* itemsPaths */, UInt32 /* numItems */, IProgress * /* progress */))
 {

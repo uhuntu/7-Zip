@@ -6,6 +6,7 @@
 
 #include "../../../Common/Defs.h"
 #include "../../../Common/StringConvert.h"
+#include "../../../Common/IntToString.h"
 #include "../../../Common/Wildcard.h"
 
 #include "../../../Windows/DLL.h"
@@ -16,6 +17,7 @@
 #include "../../Common/FilePathAutoRename.h"
 
 #include "FSFolder.h"
+#include "DismApi.h"
 
 using namespace NWindows;
 using namespace NFile;
@@ -154,6 +156,18 @@ DWORD
 
 #endif
 
+void MountProgressCallback(
+  __in UINT uiCurrent,
+  __in UINT uiTotal,
+  __in PVOID pUserData
+)
+{
+  CProgressInfo& pi = *(CProgressInfo*)pUserData;
+  UInt64 progress = pi.TotalSize * uiCurrent / uiTotal;
+  const UInt64 completed = pi.StartPos + progress;
+  pi.ProgressResult = pi.Progress->SetCompleted(&completed);
+}
+
 static DWORD CALLBACK CopyProgressRoutine(
   LARGE_INTEGER TotalFileSize,          // file size
   LARGE_INTEGER TotalBytesTransferred,  // bytes transferred
@@ -228,7 +242,9 @@ struct CCopyState
 
   void Prepare();
   bool CopyFile_NT(const wchar_t *oldFile, const wchar_t *newFile);
+  bool MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile);
   bool CopyFile_Sys(CFSTR oldFile, CFSTR newFile);
+  bool MountFile_Sys(CFSTR oldFile, CFSTR newFile);
   bool MoveFile_Sys(CFSTR oldFile, CFSTR newFile);
 
   HRESULT CallProgress();
@@ -291,6 +307,81 @@ bool CCopyState::CopyFile_NT(const wchar_t *oldFile, const wchar_t *newFile)
   return BOOLToBool(::CopyFileW(oldFile, newFile, TRUE));
 }
 
+bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile)
+{
+  HRESULT hr = S_OK;
+
+  HRESULT hrLocal = S_OK;
+  BOOL bMounted = FALSE;
+
+  // Initialize the API
+  hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
+  if (FAILED(hr))
+  {
+    FString message = L"DismInitialize Failed: ";
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    OutputDebugStringW(message + hrs);
+
+    goto Cleanup;
+  }
+
+  OutputDebugStringW(L"Mounting: ");
+
+  // Mount a WIM image 
+  hr = DismMountImage(oldFile,
+    newFile,
+    1,
+    NULL,
+    DismImageIndex,
+    DISM_MOUNT_READWRITE,
+    NULL,
+    MountProgressCallback,
+    &ProgressInfo);
+
+  if (FAILED(hr))
+  {
+    FString message = L"DismMountImage Failed: ";
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    OutputDebugStringW(message + hrs);
+
+    goto Cleanup;
+  }
+
+  bMounted = TRUE;
+
+  OutputDebugStringW(L"Complete.");
+
+Cleanup:
+
+  // Shutdown the DISM API to free up remaining resources
+  hrLocal = DismShutdown();
+  if (FAILED(hrLocal))
+  {
+    FString message = L"DismShutdown Failed: ";
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    OutputDebugStringW(message + hrs);
+  }
+
+  FString message = L"Return code is: ";
+  wchar_t ii[100];
+  ConvertInt64ToString(hr, ii);
+  FString hrs = FString(ii);
+  OutputDebugStringW(message + hrs);
+
+  if (hr == S_OK) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
 bool CCopyState::CopyFile_Sys(CFSTR oldFile, CFSTR newFile)
 {
   #ifndef _UNICODE
@@ -327,6 +418,46 @@ bool CCopyState::CopyFile_Sys(CFSTR oldFile, CFSTR newFile)
         return true;
     }
     #endif
+    return false;
+  }
+}
+
+bool CCopyState::MountFile_Sys(CFSTR oldFile, CFSTR newFile)
+{
+#ifndef _UNICODE
+  if (!g_IsNT)
+  {
+    if (my_CopyFileExA)
+    {
+      BOOL cancelFlag = FALSE;
+      if (my_CopyFileExA(fs2fas(oldFile), fs2fas(newFile),
+        CopyProgressRoutine, &ProgressInfo, &cancelFlag, COPY_FILE_FAIL_IF_EXISTS))
+        return true;
+      if (::GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        return false;
+    }
+    return BOOLToBool(::CopyFile(fs2fas(oldFile), fs2fas(newFile), TRUE));
+  }
+  else
+#endif
+  {
+    IF_USE_MAIN_PATH_2(oldFile, newFile)
+    {
+      if (MountFile_NT(fs2us(oldFile), fs2us(newFile)))
+        return true;
+    }
+#ifdef Z7_LONG_PATH
+    if (USE_SUPER_PATH_2)
+    {
+      if (IsCallbackProgressError())
+        return false;
+      UString superPathOld, superPathNew;
+      if (!GetSuperPaths(oldFile, newFile, superPathOld, superPathNew, USE_MAIN_PATH_2))
+        return false;
+      if (MountFile_NT(superPathOld, superPathNew))
+        return true;
+    }
+#endif
     return false;
   }
 }
@@ -472,6 +603,91 @@ static HRESULT CopyFile_Ask(
       }
       state.ProgressInfo.StartPos += state.ProgressInfo.FileSize;
     }
+  }
+  else
+  {
+    if (state.ProgressInfo.TotalSize >= srcFileInfo.Size)
+    {
+      state.ProgressInfo.TotalSize -= srcFileInfo.Size;
+      RINOK(state.ProgressInfo.Progress->SetTotal(state.ProgressInfo.TotalSize))
+    }
+  }
+  return state.CallProgress();
+}
+
+static HRESULT MountFile_Ask(
+  CCopyState& state,
+  const FString& srcPath,
+  const CFileInfo& srcFileInfo,
+  const FString& destPath)
+{
+  if (CompareFileNames(destPath, srcPath) == 0)
+  {
+    RINOK(SendMessageError(state.Callback,
+      state.MoveMode ?
+      "Cannot move file onto itself" :
+      "Cannot copy file onto itself"
+      , destPath))
+      return E_ABORT;
+  }
+
+  Int32 writeAskResult;
+  CMyComBSTR destPathResult;
+  RINOK(state.Callback->AskMount(
+    fs2us(srcPath),
+    BoolToInt(false),
+    &srcFileInfo.MTime, &srcFileInfo.Size,
+    fs2us(destPath),
+    &destPathResult,
+    &writeAskResult))
+
+  if (IntToBool(writeAskResult))
+  {
+    FString destPathNew = us2fs((LPCOLESTR)destPathResult);
+    RINOK(state.Callback->SetCurrentFilePath(fs2us(srcPath)))
+
+      if (state.UseReadWriteMode)
+      {
+        NFsFolder::CCopyStateIO state2;
+        state2.Progress = state.Callback;
+        state2.DeleteSrcFile = state.MoveMode;
+        state2.TotalSize = state.ProgressInfo.TotalSize;
+        state2.StartPos = state.ProgressInfo.StartPos;
+
+        RINOK(state2.MyCopyFile(srcPath, destPathNew,
+          state.IsAltStreamsDest ? INVALID_FILE_ATTRIBUTES : srcFileInfo.Attrib))
+
+          if (state2.ErrorFileIndex >= 0)
+          {
+            if (state2.ErrorMessage.IsEmpty())
+              state2.ErrorMessage = GetLastErrorMessage();
+            FString errorName;
+            if (state2.ErrorFileIndex == 0)
+              errorName = srcPath;
+            else
+              errorName = destPathNew;
+            RINOK(SendMessageError(state.Callback, state2.ErrorMessage, errorName))
+              return E_ABORT;
+          }
+        state.ProgressInfo.StartPos += state2.CurrentSize;
+      }
+      else
+      {
+        state.ProgressInfo.FileSize = srcFileInfo.Size;
+        bool res;
+        if (state.MoveMode)
+          res = state.MoveFile_Sys(srcPath, destPathNew);
+        else
+          res = state.MountFile_Sys(srcPath, destPathNew);
+        RINOK(state.ProgressInfo.ProgressResult)
+          if (!res)
+          {
+            // GetLastError() is ERROR_REQUEST_ABORTED in case of PROGRESS_CANCEL.
+            RINOK(SendMessageError(state.Callback, GetLastErrorMessage(), destPathNew))
+              return E_ABORT;
+          }
+        state.ProgressInfo.StartPos += state.ProgressInfo.FileSize;
+      }
   }
   else
   {
@@ -678,7 +894,112 @@ Z7_COM7F_IMF(CFSFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
   return S_OK;
 }
 
+Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+  Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
+  const wchar_t* path, IFolderOperationsExtractCallback* callback))
+{
+  if (numItems == 0)
+    return S_OK;
 
+  const FString destPath = us2fs(path);
+  if (destPath.IsEmpty())
+    return E_INVALIDARG;
+
+  const bool isAltDest = NName::IsAltPathPrefix(destPath);
+  const bool isDirectPath = (!isAltDest && !IsPathSepar(destPath.Back()));
+
+  if (isDirectPath)
+    if (numItems > 1)
+      return E_INVALIDARG;
+
+  CFsFolderStat stat;
+  stat.Progress = callback;
+
+  UInt32 i;
+  for (i = 0; i < numItems; i++)
+  {
+    const UInt32 index = indices[i];
+    /*
+    if (index >= Files.Size())
+    {
+      size += Streams[index - Files.Size()].Size;
+      // numFiles++;
+      continue;
+    }
+    */
+    const CDirItem& fi = Files[index];
+    if (fi.IsDir())
+    {
+      if (!isAltDest)
+      {
+        stat.Path = _path;
+        stat.Path += GetRelPath(fi);
+        RINOK(stat.Enumerate())
+      }
+      stat.NumFolders++;
+    }
+    else
+    {
+      stat.NumFiles++;
+      stat.Size += fi.Size;
+    }
+  }
+
+  /*
+  if (stat.NumFolders != 0 && isAltDest)
+    return E_NOTIMPL;
+  */
+
+  RINOK(callback->SetTotal(stat.Size))
+  RINOK(callback->SetNumFiles(stat.NumFiles))
+
+  UInt64 completedSize = 0;
+  RINOK(callback->SetCompleted(&completedSize))
+
+  CCopyState state;
+  state.ProgressInfo.TotalSize = stat.Size;
+  state.ProgressInfo.StartPos = 0;
+  state.ProgressInfo.Progress = callback;
+  state.ProgressInfo.Init();
+  state.Callback = callback;
+  state.MoveMode = IntToBool(moveMode);
+  state.IsAltStreamsDest = isAltDest;
+  /* CopyFileW(fromFile, toFile:altStream) returns ERROR_INVALID_PARAMETER,
+       if there are alt streams in fromFile.
+     So we don't use CopyFileW() for alt Streams. */
+  state.UseReadWriteMode = isAltDest;
+  state.Prepare();
+
+  for (i = 0; i < numItems; i++)
+  {
+    const UInt32 index = indices[i];
+    if (index >= (UInt32)Files.Size())
+      continue;
+    const CDirItem& fi = Files[index];
+    FString destPath2 = destPath;
+    //if (!isDirectPath)
+    //  destPath2 += fi.Name;
+    FString srcPath;
+    GetFullPath(fi, srcPath);
+
+    if (fi.IsDir())
+    {
+      if (isAltDest)
+      {
+        RINOK(SendMessageError(callback, k_CannotCopyDirToAltStream, srcPath))
+      }
+      else
+      {
+        RINOK(CopyFolder(state, srcPath, destPath2))
+      }
+    }
+    else
+    {
+      RINOK(MountFile_Ask(state, srcPath, fi, destPath2))
+    }
+  }
+  return S_OK;
+}
 
 /* we can call CopyFileSystemItems() from CDropTarget::Drop() */
 

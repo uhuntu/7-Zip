@@ -66,6 +66,14 @@ Z7_IFACE_CONSTR_FOLDER(IFolderWasChanged, 0x04)
       const wchar_t *destPathRequest, \
       BSTR *destPathResult, \
       Int32 *writeAnswer)) \
+  x(AskMount( \
+      const wchar_t *srcPath, \
+      Int32 srcIsFolder, \
+      const FILETIME *srcTime, \
+      const UInt64 *srcSize, \
+      const wchar_t *destPathRequest, \
+      BSTR *destPathResult, \
+      Int32 *writeAnswer)) \
   x(ShowMessage(const wchar_t *message)) \
   x(SetCurrentFilePath(const wchar_t *filePath)) \
   x(SetNumFiles(UInt64 numFiles)) \
@@ -79,6 +87,9 @@ Z7_IFACE_CONSTR_FOLDER_SUB(IFolderOperationsExtractCallback, IProgress, 0x0B)
   x(Rename(UInt32 index, const wchar_t *newName, IProgress *progress)) \
   x(Delete(const UInt32 *indices, UInt32 numItems, IProgress *progress)) \
   x(CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 numItems, \
+      Int32 includeAltStreams, Int32 replaceAltStreamCharsMode, \
+      const wchar_t *path, IFolderOperationsExtractCallback *callback)) \
+  x(MountTo(Int32 moveMode, const UInt32 *indices, UInt32 numItems, \
       Int32 includeAltStreams, Int32 replaceAltStreamCharsMode, \
       const wchar_t *path, IFolderOperationsExtractCallback *callback)) \
   x(CopyFrom(Int32 moveMode, const wchar_t *fromFolderPath, \

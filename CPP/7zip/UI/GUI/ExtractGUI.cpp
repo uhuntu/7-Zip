@@ -145,10 +145,7 @@ HRESULT CThreadExtracting::ProcessVirt()
   if (res == S_OK) {
     AddGuidPair(Pairs, IDS_PROP_WIM_GUID, Stat.WimGuid);
     for (i = 0; i < Stat.MountImages.Size(); i++) {
-      wchar_t ii[10];
-      ConvertUInt32ToString(i, ii);
-      FString test = L" - ";
-      AddGuidPair(Pairs, IDS_PROP_IMAGE_NAME, ii + test + Stat.MountImages[i]);
+      AddGuidPair(Pairs, IDS_PROP_IMAGE_NAME, Stat.MountImages[i]);
     }
   }
 

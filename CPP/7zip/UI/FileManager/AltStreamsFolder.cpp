@@ -862,6 +862,100 @@ Z7_COM7F_IMF(CAltStreamsFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UI
   return S_OK;
 }
 
+Z7_COM7F_IMF(CAltStreamsFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+  Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
+  const wchar_t* path, IFolderOperationsExtractCallback* callback))
+{
+  if (numItems == 0)
+    return S_OK;
+
+  /*
+  Z7_DECL_CMyComPtr_QI_FROM(
+      IFolderExtractToStreamCallback,
+      ExtractToStreamCallback, callback)
+  if (ExtractToStreamCallback)
+  {
+    Int32 useStreams = 0;
+    if (ExtractToStreamCallback->UseExtractToStream(&useStreams) != S_OK)
+      useStreams = 0;
+    if (useStreams == 0)
+      ExtractToStreamCallback.Release();
+  }
+  */
+
+  UInt64 totalSize = 0;
+  {
+    UInt32 i;
+    for (i = 0; i < numItems; i++)
+    {
+      totalSize += Streams[indices[i]].Size;
+    }
+    RINOK(callback->SetTotal(totalSize))
+      RINOK(callback->SetNumFiles(numItems))
+  }
+
+  /*
+  if (ExtractToStreamCallback)
+  {
+    CGetProp *GetProp_Spec = new CGetProp;
+    CMyComPtr<IGetProp> GetProp= GetProp_Spec;
+
+    for (UInt32 i = 0; i < numItems; i++)
+    {
+      UInt32 index = indices[i];
+      const CAltStream &ss = Streams[index];
+      GetProp_Spec->Name = ss.Name;
+      GetProp_Spec->Size = ss.Size;
+      CMyComPtr<ISequentialOutStream> outStream;
+      RINOK(ExtractToStreamCallback->GetStream7(GetProp_Spec->Name, BoolToInt(false), &outStream,
+        NArchive::NExtract::NAskMode::kExtract, GetProp)); // isDir
+      FString srcPath;
+      GetFullPath(ss, srcPath);
+      RINOK(ExtractToStreamCallback->PrepareOperation7(NArchive::NExtract::NAskMode::kExtract));
+      RINOK(ExtractToStreamCallback->SetOperationResult7(NArchive::NExtract::NOperationResult::kOK, BoolToInt(false))); // _encrypted
+      // RINOK(CopyStream(state, srcPath, fi, ss, destPath2, callback, completedSize));
+    }
+    return S_OK;
+  }
+  */
+
+  FString destPath(us2fs(path));
+  if (destPath.IsEmpty() /* && !ExtractToStreamCallback */)
+    return E_INVALIDARG;
+
+  const bool isAltDest = NName::IsAltPathPrefix(destPath);
+  const bool isDirectPath = (!isAltDest && !IsPathSepar(destPath.Back()));
+
+  if (isDirectPath)
+  {
+    if (numItems > 1)
+      return E_INVALIDARG;
+  }
+
+  CFileInfo fi;
+  if (!fi.Find(_pathBaseFile))
+    return GetLastError_noZero_HRESULT();
+
+  NFsFolder::CCopyStateIO state;
+  state.Progress = callback;
+  state.DeleteSrcFile = IntToBool(moveMode);
+  state.TotalSize = totalSize;
+
+  for (UInt32 i = 0; i < numItems; i++)
+  {
+    const UInt32 index = indices[i];
+    const CAltStream& ss = Streams[index];
+    FString destPath2 = destPath;
+    if (!isDirectPath)
+      destPath2 += us2fs(Get_Correct_FsFile_Name(ss.Name));
+    FString srcPath;
+    GetFullPath(ss, srcPath);
+    RINOK(CopyStream(state, srcPath, fi, ss, destPath2, callback))
+  }
+
+  return S_OK;
+}
+
 Z7_COM7F_IMF(CAltStreamsFolder::CopyFrom(Int32 /* moveMode */, const wchar_t * /* fromFolderPath */,
     const wchar_t * const * /* itemsPaths */, UInt32 /* numItems */, IProgress * /* progress */))
 {

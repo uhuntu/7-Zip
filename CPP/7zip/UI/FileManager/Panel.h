@@ -258,6 +258,7 @@ struct CCopyToOptions
   bool streamMode;
   bool moveMode;
   bool testMode;
+  bool mountMode;
   bool includeAltStreams;
   bool replaceAltStreamChars;
   bool showErrorMessages;
@@ -276,6 +277,7 @@ struct CCopyToOptions
       streamMode(false),
       moveMode(false),
       testMode(false),
+      mountMode(false),
       includeAltStreams(true),
       replaceAltStreamChars(false),
       showErrorMessages(false),
@@ -930,6 +932,12 @@ public:
       bool &usePassword, UString &password,
       const UStringVector *filePaths = NULL);
 
+  HRESULT MountTo(CCopyToOptions& options,
+    const CRecordVector<UInt32>& indices,
+    UStringVector* messages,
+    bool& usePassword, UString& password,
+    const UStringVector* filePaths = NULL);
+
   HRESULT CopyTo(CCopyToOptions &options,
       const CRecordVector<UInt32> &indices,
       UStringVector *messages)
@@ -943,6 +951,21 @@ public:
       password = fl.Password;
     }
     return CopyTo(options, indices, messages, usePassword, password);
+  }
+
+  HRESULT MountTo(CCopyToOptions& options,
+    const CRecordVector<UInt32>& indices,
+    UStringVector* messages)
+  {
+    bool usePassword = false;
+    UString password;
+    if (_parentFolders.Size() > 0)
+    {
+      const CFolderLink& fl = _parentFolders.Back();
+      usePassword = fl.UsePassword;
+      password = fl.Password;
+    }
+    return MountTo(options, indices, messages, usePassword, password);
   }
 
   HRESULT CopyFsItems(CCopyToOptions &options,

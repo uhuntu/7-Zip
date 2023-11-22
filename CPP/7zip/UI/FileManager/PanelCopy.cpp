@@ -108,13 +108,22 @@ HRESULT CPanelCopyThread::ProcessVirt()
         pathMode, NExtract::NOverwriteMode::kAsk,
         options->folder, BoolToInt(true), extractCallback2);
   }
-  else
+  else if (options->mountMode) {
+    result2 = FolderOperations->MountTo(
+      BoolToInt(options->moveMode),
+      &Indices.Front(), Indices.Size(),
+      BoolToInt(options->includeAltStreams),
+      BoolToInt(options->replaceAltStreamChars),
+      options->folder, ExtractCallback);
+  }
+  else {
     result2 = FolderOperations->CopyTo(
       BoolToInt(options->moveMode),
       &Indices.Front(), Indices.Size(),
       BoolToInt(options->includeAltStreams),
       BoolToInt(options->replaceAltStreamChars),
       options->folder, ExtractCallback);
+  }
 
   if (result2 == S_OK && !ExtractCallbackSpec->ThereAreMessageErrors)
   {
@@ -295,6 +304,157 @@ HRESULT CPanel::CopyTo(CCopyToOptions &options,
   return res;
 }
 
+HRESULT CPanel::MountTo(CCopyToOptions& options,
+  const CRecordVector<UInt32>& indices,
+  UStringVector* messages,
+  bool& usePassword, UString& password,
+  const UStringVector* filePaths)
+{
+  if (options.NeedRegistryZone && !options.testMode)
+  {
+    CContextMenuInfo ci;
+    ci.Load();
+    if (ci.WriteZone != (UInt32)(Int32)-1)
+      options.ZoneIdMode = (NExtract::NZoneIdMode::EEnum)(int)(Int32)ci.WriteZone;
+  }
+
+  if (IsHashFolder())
+  {
+    if (!options.testMode)
+      return E_NOTIMPL;
+  }
+
+  if (!filePaths)
+    if (!_folderOperations)
+    {
+      const UString errorMessage = LangString(IDS_OPERATION_IS_NOT_SUPPORTED);
+      if (options.showErrorMessages)
+        MessageBox_Error(errorMessage);
+      else if (messages)
+        messages->Add(errorMessage);
+      return E_FAIL;
+    }
+
+  HRESULT res = S_OK;
+
+  {
+    /*
+    #ifdef Z7_EXTERNAL_CODECS
+    CExternalCodecs g_ExternalCodecs;
+    #endif
+    */
+    /* extracter.Hash uses g_ExternalCodecs
+       extracter must be declared after g_ExternalCodecs for correct destructor order !!! */
+
+    CPanelCopyThread extracter;
+
+    extracter.ExtractCallbackSpec = new CExtractCallbackImp;
+    extracter.ExtractCallback = extracter.ExtractCallbackSpec;
+
+    extracter.options = &options;
+    extracter.ExtractCallbackSpec->ProgressDialog = &extracter;
+    extracter.CompressingMode = false;
+
+    extracter.ExtractCallbackSpec->StreamMode = options.streamMode;
+
+
+    if (indices.Size() == 1)
+    {
+      extracter.Hash.FirstFileName = GetItemRelPath(indices[0]);
+      extracter.Hash.MainName = extracter.Hash.FirstFileName;
+    }
+
+    if (options.VirtFileSystem)
+    {
+      extracter.ExtractCallbackSpec->VirtFileSystem = options.VirtFileSystem;
+      extracter.ExtractCallbackSpec->VirtFileSystemSpec = options.VirtFileSystemSpec;
+    }
+    extracter.ExtractCallbackSpec->ProcessAltStreams = options.includeAltStreams;
+
+    if (!options.hashMethods.IsEmpty())
+    {
+      /* this code is used when we call CRC calculation for files in side archive
+         But new code uses global codecs so we don't need to call LoadGlobalCodecs again */
+
+         /*
+         #ifdef Z7_EXTERNAL_CODECS
+         ThrowException_if_Error(LoadGlobalCodecs());
+         #endif
+         */
+
+      extracter.Hash.SetMethods(EXTERNAL_CODECS_VARS_G options.hashMethods);
+      extracter.ExtractCallbackSpec->SetHashMethods(&extracter.Hash);
+    }
+    else if (options.testMode)
+    {
+      extracter.ExtractCallbackSpec->SetHashCalc(&extracter.Hash);
+    }
+
+    // extracter.Hash.Init();
+
+    UString title;
+    {
+      UInt32 titleID = IDS_COPYING;
+      if (options.moveMode)
+        titleID = IDS_MOVING;
+      else if (!options.hashMethods.IsEmpty() && options.streamMode)
+      {
+        titleID = IDS_CHECKSUM_CALCULATING;
+        if (options.hashMethods.Size() == 1)
+        {
+          const UString& s = options.hashMethods[0];
+          if (s != L"*")
+            title = s;
+        }
+      }
+      else if (options.testMode)
+        titleID = IDS_PROGRESS_TESTING;
+
+      if (title.IsEmpty())
+        title = LangString(titleID);
+    }
+
+    const UString progressWindowTitle("7-Zip"); // LangString(IDS_APP_TITLE);
+
+    extracter.MainWindow = GetParent();
+    extracter.MainTitle = progressWindowTitle;
+    extracter.MainAddTitle = title + L' ';
+
+    extracter.ExtractCallbackSpec->OverwriteMode = NExtract::NOverwriteMode::kAsk;
+    extracter.ExtractCallbackSpec->Init();
+
+    extracter.CopyFrom_Paths = filePaths;
+    if (!filePaths)
+    {
+      extracter.Indices = indices;
+      extracter.FolderOperations = _folderOperations;
+    }
+
+    extracter.ExtractCallbackSpec->PasswordIsDefined = usePassword;
+    extracter.ExtractCallbackSpec->Password = password;
+
+    RINOK(extracter.Create(title, GetParent()))
+
+
+      if (messages)
+        *messages = extracter.Sync.Messages;
+
+    // res = extracter.Result2;
+    res = extracter.Result;
+
+    if (res == S_OK && extracter.ExtractCallbackSpec->IsOK())
+    {
+      usePassword = extracter.ExtractCallbackSpec->PasswordIsDefined;
+      password = extracter.ExtractCallbackSpec->Password;
+    }
+
+    extracter.ShowFinalResults(_window);
+
+  }
+
+  RefreshTitleAlways();
+  return res;
+}
 
 struct CThreadUpdate
 {

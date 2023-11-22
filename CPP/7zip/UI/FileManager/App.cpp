@@ -7,8 +7,7 @@
 
 #include "../../../Windows/FileName.h"
 #include "../../../Windows/PropVariantConv.h"
-
-#include "DismApi.h"
+#include "../../../Common/IntToString.h"
 
 /*
 #include "Windows/COM.h"
@@ -875,7 +874,10 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   for (j = 0; j < mountImages.Size(); j++) {
     FString test = L"\\";
     FString prev = L"C:\\";
-    mountImages[j] = prev + guid + test + mountImages[j] + test;
+    wchar_t jj[10];
+    ConvertUInt32ToString(j, jj);
+    FString tset = FString(jj);
+    mountImages[j] = prev + guid + test + tset + test + mountImages[j] + test;
   }
 
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
@@ -1104,11 +1106,12 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
     CCopyToOptions options;
     options.folder = useTemp ? fs2us(tempDirPrefix) : destPath;
     options.moveMode = move;
+    options.mountMode = true;
     options.includeAltStreams = true;
     options.replaceAltStreamChars = false;
     options.showErrorMessages = true;
 
-    result = srcPanel.CopyTo(options, indices, NULL);
+    result = srcPanel.MountTo(options, indices, NULL);
   }
 
   if (result == S_OK && useDestPanel)
