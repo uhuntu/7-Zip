@@ -518,6 +518,8 @@
     <Image Include="..\..\UI\FileManager\Properties.bmp" />
     <Image Include="..\..\UI\FileManager\Test.bmp" />
     <Image Include="..\..\UI\FileManager\Test2.bmp" />
+    <Image Include="..\..\UI\FileManager\UnMount.bmp" />
+    <Image Include="..\..\UI\FileManager\UnMount2.bmp" />
     <Image Include="..\..\UI\FileManager\WimInfo.bmp" />
     <Image Include="..\..\UI\FileManager\WimInfo2.bmp" />
   </ItemGroup>

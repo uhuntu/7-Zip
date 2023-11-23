@@ -129,6 +129,10 @@
     <Image Include="..\..\UI\FileManager\WimInfo.bmp">
       <Filter>Spec</Filter>
     </Image>
+    <Image Include="..\..\UI\FileManager\UnMount.bmp">
+      <Filter>Spec</Filter>
+    </Image>
+    <Image Include="..\..\UI\FileManager\UnMount2.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\UI\FileManager\ClassDefs.cpp">

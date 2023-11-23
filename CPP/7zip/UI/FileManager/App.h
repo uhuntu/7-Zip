@@ -34,6 +34,7 @@ enum
 enum
 {
   kMenuCmdID_WimDism_Mount = kMenuCmdID_WimDism_Start,
+  kMenuCmdID_WimDism_UnMount,
   kMenuCmdID_WimDism_New,
   kMenuCmdID_WimDism_Expand,
   kMenuCmdID_WimDism_WimInfo,
