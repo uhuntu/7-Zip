@@ -480,14 +480,14 @@ Z7_COM7F_IMF(CFSDrives::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
   return S_OK;
 }
 
-Z7_COM7F_IMF(CFSDrives::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+Z7_COM7F_IMF(CFSDrives::MountTo(Int32 unMountMode, const UInt32* indices, UInt32 numItems,
   Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
   const wchar_t* path, int /*_index*/, IFolderOperationsExtractCallback* callback))
 {
   if (numItems == 0)
     return S_OK;
 
-  if (moveMode)
+  if (unMountMode)
     return E_NOTIMPL;
 
   if (!_volumeMode)

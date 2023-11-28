@@ -229,6 +229,7 @@ struct CCopyState
   CProgressInfo ProgressInfo;
   IFolderOperationsExtractCallback *Callback;
   bool MoveMode;
+  bool unMountMode;
   bool UseReadWriteMode;
   bool IsAltStreamsDest;
 
@@ -775,7 +776,7 @@ static HRESULT MountFile_Ask(
       {
         state.ProgressInfo.FileSize = srcFileInfo.Size;
         bool res;
-        if (state.MoveMode)
+        if (state.unMountMode)
           res = state.UnMountFile_Sys(srcPath, destPathNew);
         else
           res = state.MountFile_Sys(srcPath, destPathNew, imageIndex);
@@ -994,7 +995,7 @@ Z7_COM7F_IMF(CFSFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
   return S_OK;
 }
 
-Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+Z7_COM7F_IMF(CFSFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32 numItems,
   Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
   const wchar_t* path, int imageIndex, IFolderOperationsExtractCallback* callback))
 {
@@ -1062,7 +1063,8 @@ Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 nu
   state.ProgressInfo.Progress = callback;
   state.ProgressInfo.Init();
   state.Callback = callback;
-  state.MoveMode = IntToBool(moveMode);
+  state.MoveMode = IntToBool(unMountMode);
+  state.unMountMode = IntToBool(unMountMode);
   state.IsAltStreamsDest = isAltDest;
   /* CopyFileW(fromFile, toFile:altStream) returns ERROR_INVALID_PARAMETER,
        if there are alt streams in fromFile.

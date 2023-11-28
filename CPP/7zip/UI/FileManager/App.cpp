@@ -862,7 +862,7 @@ void CApp::OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex)
   srcPanel.SetFocusToList();
 }
 
-void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
+void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
 {
   const unsigned destPanelIndex = (NumPanels <= 1) ? srcPanelIndex : (1 - srcPanelIndex);
   CPanel& srcPanel = Panels[srcPanelIndex];
@@ -871,7 +871,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   UStringVector mountPaths;
   UStringVector mountImages;
 
-  if (!move) {
+  if (!unMount) {
       FString guid = srcPanel.GuidArchives(mountPaths);
       for (unsigned j = 0; j < mountPaths.Size(); j++) {
           FString test = L"\\";
@@ -893,7 +893,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
   CPanel::CDisableTimerProcessing disableTimerProcessing2(srcPanel);
 
-  if (move)
+  if (unMount)
   {
     if (!srcPanel.CheckBeforeUpdate(IDS_UNMOUNT))
       return;
@@ -951,8 +951,8 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
     copyDialog.Strings = copyFolders;
     copyDialog.Value = destPath;
-    LangString(move ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
-    LangString(move ? IDS_UNMOUNT_FROM : IDS_MOUNT_TO, copyDialog.Static);
+    LangString(unMount ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
+    LangString(unMount ? IDS_UNMOUNT_FROM : IDS_MOUNT_TO, copyDialog.Static);
     copyDialog.Info = srcPanel.GetItemsInfoString(indices);
 
     if (copyDialog.Create(srcPanel.GetParent()) != IDOK)
@@ -1123,7 +1123,8 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
     CCopyToOptions options;
     options.folder = useTemp ? fs2us(tempDirPrefix) : destPath;
     options.ImageIndex = destIndex + 1;
-    options.moveMode = move;
+    options.moveMode = unMount;
+    options.unMountMode = unMount;
     options.mountMode = true;
     options.includeAltStreams = true;
     options.replaceAltStreamChars = false;
@@ -1155,7 +1156,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
       filePaths.AddInReserved(s);
     }
 
-    result = destPanel.CopyFrom(move, folderPrefix, filePaths, true, NULL);
+    result = destPanel.CopyFrom(unMount, folderPrefix, filePaths, true, NULL);
   }
 
   if (result != S_OK)
@@ -1173,7 +1174,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
   RefreshTitleAlways();
 
-  if (copyToSame || move)
+  if (copyToSame || unMount)
   {
     srcPanel.RefreshListCtrl(srcSelState);
   }

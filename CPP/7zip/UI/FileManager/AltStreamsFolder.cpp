@@ -862,7 +862,7 @@ Z7_COM7F_IMF(CAltStreamsFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UI
   return S_OK;
 }
 
-Z7_COM7F_IMF(CAltStreamsFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+Z7_COM7F_IMF(CAltStreamsFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32 numItems,
   Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
   const wchar_t* path, int /*_index*/, IFolderOperationsExtractCallback* callback))
 {
@@ -938,7 +938,7 @@ Z7_COM7F_IMF(CAltStreamsFolder::MountTo(Int32 moveMode, const UInt32* indices, U
 
   NFsFolder::CCopyStateIO state;
   state.Progress = callback;
-  state.DeleteSrcFile = IntToBool(moveMode);
+  state.DeleteSrcFile = IntToBool(unMountMode);
   state.TotalSize = totalSize;
 
   for (UInt32 i = 0; i < numItems; i++)

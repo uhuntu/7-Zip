@@ -50,11 +50,11 @@ Z7_COM7F_IMF(CAgentFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 
   COM_TRY_END
 }
 
-Z7_COM7F_IMF(CAgentFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
+Z7_COM7F_IMF(CAgentFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32 numItems,
   Int32 includeAltStreams, Int32 replaceAltStreamCharsMode,
   const wchar_t* path, int /*_index*/, IFolderOperationsExtractCallback* callback))
 {
-  if (moveMode)
+  if (unMountMode)
     return E_NOTIMPL;
   COM_TRY_BEGIN
     CMyComPtr<IFolderArchiveExtractCallback> extractCallback2;

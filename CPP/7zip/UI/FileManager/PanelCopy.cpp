@@ -110,7 +110,7 @@ HRESULT CPanelCopyThread::ProcessVirt()
   }
   else if (options->mountMode) {
     result2 = FolderOperations->MountTo(
-      BoolToInt(options->moveMode),
+      BoolToInt(options->unMountMode),
       &Indices.Front(), Indices.Size(),
       BoolToInt(options->includeAltStreams),
       BoolToInt(options->replaceAltStreamChars),
