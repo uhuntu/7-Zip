@@ -18,6 +18,7 @@ HRESULT CompressFiles(
 void ExtractArchives(const UStringVector &arcPaths, const UString &outFolder, bool showDialog, bool elimDup, UInt32 writeZone);
 void TestArchives(const UStringVector &arcPaths, bool hashMode = false);
 FString GuidArchives(UStringVector& arcPaths, bool hashMode = false);
+void GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages);
 
 void CalcChecksum(const UStringVector &paths,
     const UString &methodName,

@@ -138,6 +138,7 @@ public:
   void EditItem(bool useEditor) { GetFocusedPanel().EditItem(useEditor); }
   void Rename() { GetFocusedPanel().RenameFile(); }
   void MountTo() { OnMount(false, false, GetFocusedPanelIndex()); }
+  void UnMountFrom() { OnMount(true, false, GetFocusedPanelIndex()); }
   void CopyTo() { OnCopy(false, false, GetFocusedPanelIndex()); }
   void MoveTo() { OnCopy(true, false, GetFocusedPanelIndex()); }
   void Delete(bool toRecycleBin) { GetFocusedPanel().DeleteItems(toRecycleBin); }

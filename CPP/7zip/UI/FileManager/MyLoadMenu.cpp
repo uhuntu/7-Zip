@@ -726,6 +726,7 @@ bool ExecuteDismCommand(unsigned id)
   {
     // Dism
     case IDM_MOUNT_TO: g_App.MountTo(); break;
+    case IDM_UNMOUNT_FROM: g_App.UnMountFrom(); break;
     default: return false;
   }
 	return true;

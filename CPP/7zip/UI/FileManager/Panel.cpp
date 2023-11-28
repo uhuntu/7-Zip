@@ -1184,7 +1184,7 @@ void CPanel::TestArchives()
 FString CPanel::GuidArchives(UStringVector &mountImages)
 {
   CRecordVector<UInt32> indices;
-  Get_ItemIndices_OperSmart(indices);
+  Get_ItemIndices_Operated(indices);
   CMyComPtr<IArchiveFolder> archiveFolder;
   _folder.QueryInterface(IID_IArchiveFolder, &archiveFolder);
   if (archiveFolder)
@@ -1211,12 +1211,59 @@ FString CPanel::GuidArchives(UStringVector &mountImages)
   }
   UStringVector paths;
   GetFilePaths(indices, paths);
-  if (paths.IsEmpty())
+  if (paths.Size() != 1)
   {
-    MessageBox_Error_LangID(IDS_SELECT_FILES);
+    MessageBox_Error_LangID(IDS_SELECT_ONE_FILE);
     return L"null";
   }
   FString guid = ::GuidArchives(paths);
+  if (paths.Size() == 0) {
+    MessageBox_Error_LangID(IDS_SELECT_WIM_FILE);
+    return L"null";
+  }
   mountImages = paths;
   return guid;
+}
+
+void CPanel::GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages)
+{
+    CRecordVector<UInt32> indices;
+    Get_ItemIndices_OperSmart(indices);
+    CMyComPtr<IArchiveFolder> archiveFolder;
+    _folder.QueryInterface(IID_IArchiveFolder, &archiveFolder);
+    if (archiveFolder)
+    {
+        CCopyToOptions options;
+        options.streamMode = true;
+        options.showErrorMessages = true;
+        options.testMode = true;
+
+        UStringVector messages;
+        HRESULT res = CopyTo(options, indices, &messages);
+        if (res != S_OK)
+        {
+            if (res != E_ABORT)
+                MessageBox_Error_HRESULT(res);
+        }
+        return;
+    }
+
+    if (!IsFSFolder())
+    {
+        MessageBox_Error_UnsupportOperation();
+        return;
+    }
+    UStringVector paths;
+    GetFilePaths(indices, paths);
+    if (paths.IsEmpty())
+    {
+        MessageBox_Error_LangID(IDS_SELECT_FILES);
+        return;
+    }
+    ::GetMountedImageInfo(mountPaths, mountImages);
+    if (mountPaths.Size() == 0)
+    {
+        MessageBox_Error_LangID(IDS_MOUNTED_ENTRIES);
+        return;
+    }
 }

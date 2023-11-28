@@ -99,5 +99,9 @@ void CCopyDialog::OnButtonSetPath()
 void CCopyDialog::OnOK()
 {
   _path.GetText(Value);
+  Index = _path.GetCurSel();
+  if (Index == -1) {
+      Index = 0;
+  }
   CModalDialog::OnOK();
 }

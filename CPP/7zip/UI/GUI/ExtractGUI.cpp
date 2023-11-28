@@ -187,8 +187,6 @@ HRESULT CThreadExtracting::ProcessVirt()
   return res;
 }
 
-
-
 HRESULT ExtractGUI(
     // DECL_EXTERNAL_CODECS_LOC_VARS
     CCodecs *codecs,

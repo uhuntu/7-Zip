@@ -5,6 +5,7 @@
 #ifndef Z7_EXTERNAL_CODECS
 
 #include "../../../Common/MyException.h"
+#include "../../../Common/IntToString.h"
 
 #include "../../UI/Common/EnumDirItems.h"
 
@@ -18,6 +19,7 @@
 #include "../../UI/GUI/ExtractRes.h"
 
 #include "CompressCall.h"
+#include "DismApi.h"
 
 extern HWND g_HWND;
 
@@ -152,7 +154,6 @@ HRESULT CompressFiles(
   return S_OK;
 }
 
-
 static HRESULT ExtractGroupCommand(const UStringVector &arcPaths,
     bool showDialog, CExtractOptions &eo, const char *kType = NULL)
 {
@@ -256,6 +257,77 @@ FString GuidArchives(UStringVector& arcPaths, bool hashMode)
     hashMode ? "hash" : NULL);
   arcPaths = eo.MountImages;
   return eo.WimGuid;
+}
+
+bool GetMountedImageInfo_NT(UStringVector& mountPaths, UStringVector& mountImages);
+
+static FString HrToString(HRESULT hr) {
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    return hrs;
+}
+
+bool GetMountedImageInfo_NT(UStringVector& mountPaths, UStringVector& mountImages)
+{
+    HRESULT hr = S_OK;
+    HRESULT hrLocal = S_OK;
+
+    // Initialize the API
+    hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
+    if (FAILED(hr))
+    {
+        FString message = L"DismInitialize Failed: ";
+        OutputDebugStringW(message + HrToString(hr));
+
+        goto Cleanup;
+    }
+
+    DismMountedImageInfo* ImageInfo;
+    UINT ImageInfoCount;
+
+    hr = DismGetMountedImageInfo(&ImageInfo, &ImageInfoCount);
+
+    if (FAILED(hr))
+    {
+        OutputDebugStringW(L"DismGetMountedImageInfo Failed: " + HrToString(hr));
+        goto Cleanup;
+    }
+
+    for (unsigned i = 0; i < ImageInfoCount; i++) {
+        OutputDebugStringW(L"ImageInfo[%d].MountPath: " + FString(ImageInfo[i].MountPath));
+        OutputDebugStringW(L"ImageInfo[%d].ImageFilePath: " + FString(ImageInfo[i].ImageFilePath));
+        OutputDebugStringW(L"ImageInfo[%d].ImageIndex: " + ImageInfo[i].ImageIndex);
+        OutputDebugStringW(L"ImageInfo[%d].MountMode: " + ImageInfo[i].MountMode);
+        OutputDebugStringW(L"ImageInfo[%d].MountStatus: " + ImageInfo[i].MountStatus);
+        mountPaths.Add(FString(ImageInfo[i].MountPath));
+        mountImages.Add(FString(ImageInfo[i].ImageFilePath));
+    }
+
+Cleanup:
+
+    // Shutdown the DISM API to free up remaining resources
+    hrLocal = DismShutdown();
+    if (FAILED(hrLocal))
+    {
+        FString message = L"DismShutdown Failed: ";
+        OutputDebugStringW(message + HrToString(hr));
+    }
+
+    FString message = L"Return code is: ";
+    OutputDebugStringW(message + HrToString(hr));
+
+    if (hr == S_OK) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages)
+{
+    GetMountedImageInfo_NT(mountPaths, mountImages);
 }
 
 void CalcChecksum(const UStringVector &paths,

@@ -242,9 +242,11 @@ struct CCopyState
 
   void Prepare();
   bool CopyFile_NT(const wchar_t *oldFile, const wchar_t *newFile);
-  bool MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile);
+  bool MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile, UINT ImageIndex);
+  bool UnMountFile_NT(const wchar_t* newFile);
   bool CopyFile_Sys(CFSTR oldFile, CFSTR newFile);
-  bool MountFile_Sys(CFSTR oldFile, CFSTR newFile);
+  bool MountFile_Sys(CFSTR oldFile, CFSTR newFile, UINT imageIndex);
+  bool UnMountFile_Sys(CFSTR oldFile, CFSTR newFile);
   bool MoveFile_Sys(CFSTR oldFile, CFSTR newFile);
 
   HRESULT CallProgress();
@@ -307,7 +309,14 @@ bool CCopyState::CopyFile_NT(const wchar_t *oldFile, const wchar_t *newFile)
   return BOOLToBool(::CopyFileW(oldFile, newFile, TRUE));
 }
 
-bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile)
+static FString HrToString(HRESULT hr) {
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    return hrs;
+}
+
+bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile, UINT imageIndex)
 {
   HRESULT hr = S_OK;
 
@@ -319,10 +328,7 @@ bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile)
   if (FAILED(hr))
   {
     FString message = L"DismInitialize Failed: ";
-    wchar_t ii[100];
-    ConvertInt64ToString(hr, ii);
-    FString hrs = FString(ii);
-    OutputDebugStringW(message + hrs);
+    OutputDebugStringW(message + HrToString(hr));
 
     goto Cleanup;
   }
@@ -332,7 +338,7 @@ bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile)
   // Mount a WIM image 
   hr = DismMountImage(oldFile,
     newFile,
-    1,
+    imageIndex,
     NULL,
     DismImageIndex,
     DISM_MOUNT_READWRITE,
@@ -343,10 +349,7 @@ bool CCopyState::MountFile_NT(const wchar_t* oldFile, const wchar_t* newFile)
   if (FAILED(hr))
   {
     FString message = L"DismMountImage Failed: ";
-    wchar_t ii[100];
-    ConvertInt64ToString(hr, ii);
-    FString hrs = FString(ii);
-    OutputDebugStringW(message + hrs);
+    OutputDebugStringW(message + HrToString(hr));
 
     goto Cleanup;
   }
@@ -362,17 +365,73 @@ Cleanup:
   if (FAILED(hrLocal))
   {
     FString message = L"DismShutdown Failed: ";
-    wchar_t ii[100];
-    ConvertInt64ToString(hr, ii);
-    FString hrs = FString(ii);
-    OutputDebugStringW(message + hrs);
+    OutputDebugStringW(message + HrToString(hr));
   }
 
   FString message = L"Return code is: ";
-  wchar_t ii[100];
-  ConvertInt64ToString(hr, ii);
-  FString hrs = FString(ii);
-  OutputDebugStringW(message + hrs);
+  OutputDebugStringW(message + HrToString(hr));
+
+  if (hr == S_OK) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+bool CCopyState::UnMountFile_NT(const wchar_t* newFile)
+{
+  HRESULT hr = S_OK;
+
+  HRESULT hrLocal = S_OK;
+  BOOL bMounted = FALSE;
+
+  // Initialize the API
+  hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
+  if (FAILED(hr))
+  {
+    FString message = L"DismInitialize Failed: ";
+    OutputDebugStringW(message + HrToString(hr));
+
+    goto Cleanup;
+  }
+
+  OutputDebugStringW(L"Mounting: ");
+
+  bMounted = TRUE;
+
+  OutputDebugStringW(L"Complete.");
+
+  // Unmount the image if is has been mounted.  If the package was successfully added,
+  // then commit the changes.  Otherwise, discard the
+  // changes
+  if (bMounted)
+  {
+      OutputDebugStringW(L"Unmounting: ");
+
+      hrLocal = DismUnmountImage(newFile,
+          DISM_DISCARD_IMAGE,
+          NULL,
+          MountProgressCallback,
+          &ProgressInfo);
+      if (FAILED(hrLocal))
+      {
+          OutputDebugStringW(L"DismUnmountImage Failed: %x" + HrToString(hrLocal));
+      }
+  }
+
+Cleanup:
+
+  // Shutdown the DISM API to free up remaining resources
+  hrLocal = DismShutdown();
+  if (FAILED(hrLocal))
+  {
+    FString message = L"DismShutdown Failed: ";
+    OutputDebugStringW(message + HrToString(hr));
+  }
+
+  FString message = L"Return code is: ";
+  OutputDebugStringW(message + HrToString(hr));
 
   if (hr == S_OK) {
     return true;
@@ -422,7 +481,7 @@ bool CCopyState::CopyFile_Sys(CFSTR oldFile, CFSTR newFile)
   }
 }
 
-bool CCopyState::MountFile_Sys(CFSTR oldFile, CFSTR newFile)
+bool CCopyState::MountFile_Sys(CFSTR oldFile, CFSTR newFile, UINT imageIndex)
 {
 #ifndef _UNICODE
   if (!g_IsNT)
@@ -443,7 +502,7 @@ bool CCopyState::MountFile_Sys(CFSTR oldFile, CFSTR newFile)
   {
     IF_USE_MAIN_PATH_2(oldFile, newFile)
     {
-      if (MountFile_NT(fs2us(oldFile), fs2us(newFile)))
+      if (MountFile_NT(fs2us(oldFile), fs2us(newFile), imageIndex))
         return true;
     }
 #ifdef Z7_LONG_PATH
@@ -454,7 +513,47 @@ bool CCopyState::MountFile_Sys(CFSTR oldFile, CFSTR newFile)
       UString superPathOld, superPathNew;
       if (!GetSuperPaths(oldFile, newFile, superPathOld, superPathNew, USE_MAIN_PATH_2))
         return false;
-      if (MountFile_NT(superPathOld, superPathNew))
+      if (MountFile_NT(superPathOld, superPathNew, imageIndex))
+        return true;
+    }
+#endif
+    return false;
+  }
+}
+
+bool CCopyState::UnMountFile_Sys(CFSTR oldFile, CFSTR newFile)
+{
+#ifndef _UNICODE
+  if (!g_IsNT)
+  {
+    if (my_CopyFileExA)
+    {
+      BOOL cancelFlag = FALSE;
+      if (my_CopyFileExA(fs2fas(oldFile), fs2fas(newFile),
+        CopyProgressRoutine, &ProgressInfo, &cancelFlag, COPY_FILE_FAIL_IF_EXISTS))
+        return true;
+      if (::GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        return false;
+    }
+    return BOOLToBool(::CopyFile(fs2fas(oldFile), fs2fas(newFile), TRUE));
+  }
+  else
+#endif
+  {
+    IF_USE_MAIN_PATH_2(oldFile, newFile)
+    {
+      if (UnMountFile_NT(fs2us(newFile)))
+        return true;
+    }
+#ifdef Z7_LONG_PATH
+    if (USE_SUPER_PATH_2)
+    {
+      if (IsCallbackProgressError())
+        return false;
+      UString superPathOld, superPathNew;
+      if (!GetSuperPaths(oldFile, newFile, superPathOld, superPathNew, USE_MAIN_PATH_2))
+        return false;
+      if (UnMountFile_NT(superPathNew))
         return true;
     }
 #endif
@@ -619,7 +718,8 @@ static HRESULT MountFile_Ask(
   CCopyState& state,
   const FString& srcPath,
   const CFileInfo& srcFileInfo,
-  const FString& destPath)
+  const FString& destPath,
+  const UINT imageIndex)
 {
   if (CompareFileNames(destPath, srcPath) == 0)
   {
@@ -676,9 +776,9 @@ static HRESULT MountFile_Ask(
         state.ProgressInfo.FileSize = srcFileInfo.Size;
         bool res;
         if (state.MoveMode)
-          res = state.MoveFile_Sys(srcPath, destPathNew);
+          res = state.UnMountFile_Sys(srcPath, destPathNew);
         else
-          res = state.MountFile_Sys(srcPath, destPathNew);
+          res = state.MountFile_Sys(srcPath, destPathNew, imageIndex);
         RINOK(state.ProgressInfo.ProgressResult)
           if (!res)
           {
@@ -896,7 +996,7 @@ Z7_COM7F_IMF(CFSFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
 
 Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 numItems,
   Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
-  const wchar_t* path, IFolderOperationsExtractCallback* callback))
+  const wchar_t* path, int imageIndex, IFolderOperationsExtractCallback* callback))
 {
   if (numItems == 0)
     return S_OK;
@@ -977,6 +1077,7 @@ Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 nu
       continue;
     const CDirItem& fi = Files[index];
     FString destPath2 = destPath;
+
     //if (!isDirectPath)
     //  destPath2 += fi.Name;
     FString srcPath;
@@ -995,7 +1096,7 @@ Z7_COM7F_IMF(CFSFolder::MountTo(Int32 moveMode, const UInt32* indices, UInt32 nu
     }
     else
     {
-      RINOK(MountFile_Ask(state, srcPath, fi, destPath2))
+      RINOK(MountFile_Ask(state, srcPath, fi, destPath2, imageIndex))
     }
   }
   return S_OK;

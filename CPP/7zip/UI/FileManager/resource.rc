@@ -201,7 +201,7 @@ BEGIN
   IDS_VIRUS                "The file looks like a virus (the file name contains long spaces in name)."
   IDS_MESSAGE_UNSUPPORTED_OPERATION_FOR_LONG_PATH_FOLDER "The operation cannot be called from a folder that has a long path."
   IDS_SELECT_ONE_FILE      "You must select one file"
-  // IDS_SELECT_FILES         "You must select one or more files"
+  IDS_SELECT_WIM_FILE      "You must select wim file"
   IDS_TOO_MANY_ITEMS       "Too many items"
 
   IDS_COPY      "Copy"
@@ -209,9 +209,12 @@ BEGIN
   IDS_COPY_TO   "Copy to:"
   IDS_MOVE_TO   "Move to:"
   IDS_MOUNT_TO  "Mount to:"
+  IDS_UNMOUNT_FROM  "UnMount from:"
   IDS_COPYING   "Copying..."
   IDS_MOVING    "Moving..."
   IDS_RENAMING  "Renaming..."
+  IDS_MOUNTING  "Mounting..."
+  IDS_UNMOUNTING "UnMounting..."
 
   IDS_OPERATION_IS_NOT_SUPPORTED  "Operation is not supported."
   IDS_ERROR_RENAMING  "Error Renaming File or Folder"

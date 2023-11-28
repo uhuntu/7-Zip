@@ -143,6 +143,8 @@
 #define IDS_SELECT_ONE_FILE             3014
 #define IDS_SELECT_FILES                3015
 #define IDS_TOO_MANY_ITEMS              3016
+#define IDS_SELECT_WIM_FILE             3020
+#define IDS_MOUNTED_ENTRIES             3021
 
 #define IDS_COPY                        6000
 #define IDS_MOVE                        6001
@@ -158,6 +160,9 @@
 #define IDS_WANT_TO_COPY_FILES          6011
 
 #define IDS_MOUNT_TO                    6020
+#define IDS_UNMOUNT_FROM                6021
+#define IDS_MOUNTING                    6022
+#define IDS_UNMOUNTING                  6023
 
 #define IDS_CONFIRM_FILE_DELETE         6100
 #define IDS_CONFIRM_FOLDER_DELETE       6101

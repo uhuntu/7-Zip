@@ -868,17 +868,26 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   CPanel& srcPanel = Panels[srcPanelIndex];
   CPanel& destPanel = Panels[destPanelIndex];
 
+  UStringVector mountPaths;
   UStringVector mountImages;
-  FString guid = srcPanel.GuidArchives(mountImages);
 
-  unsigned j;
-  for (j = 0; j < mountImages.Size(); j++) {
-    FString test = L"\\";
-    FString prev = L"C:\\";
-    wchar_t jj[10];
-    ConvertUInt32ToString(j, jj);
-    FString tset = FString(jj);
-    mountImages[j] = prev + guid + test + tset + test + mountImages[j] + test;
+  if (!move) {
+      FString guid = srcPanel.GuidArchives(mountPaths);
+      for (unsigned j = 0; j < mountPaths.Size(); j++) {
+          FString test = L"\\";
+          FString prev = L"C:\\";
+          wchar_t jj[10];
+          ConvertUInt32ToString(j + 1, jj);
+          FString tset = FString(jj);
+          mountPaths[j] = prev + guid + test + tset + test + mountPaths[j] + test;
+      }
+  }
+  else {
+      srcPanel.GetMountedImageInfo(mountPaths, mountImages);
+  }
+
+  if (mountPaths.Size() == 0) {
+      return;
   }
 
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
@@ -886,7 +895,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
   if (move)
   {
-    if (!srcPanel.CheckBeforeUpdate(IDS_MOVE))
+    if (!srcPanel.CheckBeforeUpdate(IDS_UNMOUNT))
       return;
   }
   else if (!srcPanel.DoesItSupportOperations())
@@ -897,6 +906,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
   CRecordVector<UInt32> indices;
   UString destPath;
+  int destIndex;
   bool useDestPanel = false;
 
   {
@@ -922,12 +932,17 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
     }
   }
 
-  destPath = mountImages[0];
+  if (mountPaths.Size() == 0) {
+      destPath = L"";
+  }
+  else {
+      destPath = mountPaths[0];
+  }
 
   UStringVector copyFolders;
   ReadCopyHistory(copyFolders);
 
-  copyFolders = mountImages;
+  copyFolders = mountPaths;
 
   const bool useFullItemPaths = srcPanel.Is_IO_FS_Folder(); // maybe we need flat also here ??
 
@@ -936,14 +951,15 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
 
     copyDialog.Strings = copyFolders;
     copyDialog.Value = destPath;
-    LangString(move ? IDS_MOVE : IDS_MOUNT, copyDialog.Title);
-    LangString(move ? IDS_MOVE_TO : IDS_MOUNT_TO, copyDialog.Static);
+    LangString(move ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
+    LangString(move ? IDS_UNMOUNT_FROM : IDS_MOUNT_TO, copyDialog.Static);
     copyDialog.Info = srcPanel.GetItemsInfoString(indices);
 
     if (copyDialog.Create(srcPanel.GetParent()) != IDOK)
       return;
 
     destPath = copyDialog.Value;
+    destIndex = copyDialog.Index;
   }
 
   {
@@ -1106,6 +1122,7 @@ void CApp::OnMount(bool move, bool copyToSame, unsigned srcPanelIndex)
   {
     CCopyToOptions options;
     options.folder = useTemp ? fs2us(tempDirPrefix) : destPath;
+    options.ImageIndex = destIndex + 1;
     options.moveMode = move;
     options.mountMode = true;
     options.includeAltStreams = true;

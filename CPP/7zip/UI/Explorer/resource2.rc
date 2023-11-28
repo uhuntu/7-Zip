@@ -14,6 +14,7 @@ BEGIN
   IDS_CONTEXT_COMPRESS_EMAIL "Compress and email..."
   IDS_CONTEXT_COMPRESS_TO_EMAIL "Compress to {0} and email"
   IDS_SELECT_FILES         "You must select one or more files"
+  IDS_MOUNTED_ENTRIES      "There are no mounted entries"
 END
 
 IDB_MENU_LOGO  BITMAP  "../../UI/Explorer/MenuLogo.bmp"

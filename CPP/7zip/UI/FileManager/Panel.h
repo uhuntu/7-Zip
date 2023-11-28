@@ -267,6 +267,7 @@ struct CCopyToOptions
   NExtract::NZoneIdMode::EEnum ZoneIdMode;
 
   UString folder;
+  UINT ImageIndex;
 
   UStringVector hashMethods;
 
@@ -924,7 +925,7 @@ public:
   void ExtractArchives();
   void TestArchives();
   FString GuidArchives(UStringVector &mountImages);
-
+  void GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages);
 
   HRESULT CopyTo(CCopyToOptions &options,
       const CRecordVector<UInt32> &indices,

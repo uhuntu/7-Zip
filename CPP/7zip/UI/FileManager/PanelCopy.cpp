@@ -114,7 +114,7 @@ HRESULT CPanelCopyThread::ProcessVirt()
       &Indices.Front(), Indices.Size(),
       BoolToInt(options->includeAltStreams),
       BoolToInt(options->replaceAltStreamChars),
-      options->folder, ExtractCallback);
+      options->folder, options->ImageIndex, ExtractCallback);
   }
   else {
     result2 = FolderOperations->CopyTo(
@@ -394,9 +394,9 @@ HRESULT CPanel::MountTo(CCopyToOptions& options,
 
     UString title;
     {
-      UInt32 titleID = IDS_COPYING;
+      UInt32 titleID = IDS_MOUNTING;
       if (options.moveMode)
-        titleID = IDS_MOVING;
+        titleID = IDS_UNMOUNTING;
       else if (!options.hashMethods.IsEmpty() && options.streamMode)
       {
         titleID = IDS_CHECKSUM_CALCULATING;

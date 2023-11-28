@@ -22,6 +22,7 @@ public:
   UString Title;
   UString Static;
   UString Value;
+  int Index;
   UString Info;
   UStringVector Strings;
 

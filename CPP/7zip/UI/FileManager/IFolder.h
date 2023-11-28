@@ -91,7 +91,7 @@ Z7_IFACE_CONSTR_FOLDER_SUB(IFolderOperationsExtractCallback, IProgress, 0x0B)
       const wchar_t *path, IFolderOperationsExtractCallback *callback)) \
   x(MountTo(Int32 moveMode, const UInt32 *indices, UInt32 numItems, \
       Int32 includeAltStreams, Int32 replaceAltStreamCharsMode, \
-      const wchar_t *path, IFolderOperationsExtractCallback *callback)) \
+      const wchar_t *path, int _index, IFolderOperationsExtractCallback *callback)) \
   x(CopyFrom(Int32 moveMode, const wchar_t *fromFolderPath, \
       const wchar_t * const *itemsPaths, UInt32 numItems, IProgress *progress)) \
   x(SetProperty(UInt32 index, PROPID propID, const PROPVARIANT *value, IProgress *progress)) \
