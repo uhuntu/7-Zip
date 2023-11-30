@@ -269,6 +269,7 @@ struct CCopyToOptions
 
   UString folder;
   UINT ImageIndex;
+  UString ImagePath;
 
   UStringVector hashMethods;
 
@@ -926,7 +927,7 @@ public:
   void GetFilePaths(const CRecordVector<UInt32> &indices, UStringVector &paths) const;
   void ExtractArchives();
   void TestArchives();
-  FString GuidArchives(UStringVector &mountImages);
+  bool GuidArchives(UStringVector &mountImages, UString &wimGuid);
   void GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages);
 
   HRESULT CopyTo(CCopyToOptions &options,

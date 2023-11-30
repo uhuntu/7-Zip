@@ -803,9 +803,6 @@ void CPanel::MessageBox_Error_LangID(UINT resourceID) const
 void CPanel::MessageBox_Error_UnsupportOperation() const
   { MessageBox_Error_LangID(IDS_OPERATION_IS_NOT_SUPPORTED); }
 
-
-
-
 void CPanel::SetFocusToList()
 {
   _listView.SetFocus();
@@ -1181,7 +1178,7 @@ void CPanel::TestArchives()
   ::TestArchives(paths);
 }
 
-FString CPanel::GuidArchives(UStringVector &mountImages)
+bool CPanel::GuidArchives(UStringVector &mountImages, UString &wimGuid)
 {
   CRecordVector<UInt32> indices;
   Get_ItemIndices_Operated(indices);
@@ -1201,28 +1198,28 @@ FString CPanel::GuidArchives(UStringVector &mountImages)
       if (res != E_ABORT)
         MessageBox_Error_HRESULT(res);
     }
-    return L"null";
+    return false;
   }
 
   if (!IsFSFolder())
   {
     MessageBox_Error_UnsupportOperation();
-    return L"null";
+    return false;
   }
   UStringVector paths;
   GetFilePaths(indices, paths);
   if (paths.Size() != 1)
   {
     MessageBox_Error_LangID(IDS_SELECT_ONE_FILE);
-    return L"null";
+    return false;
   }
-  FString guid = ::GuidArchives(paths);
+  ::GuidArchives(paths, wimGuid);
+  mountImages = paths;
   if (paths.Size() == 0) {
     MessageBox_Error_LangID(IDS_SELECT_WIM_FILE);
-    return L"null";
+    return false;
   }
-  mountImages = paths;
-  return guid;
+  return true;
 }
 
 void CPanel::GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mountImages)
@@ -1261,9 +1258,4 @@ void CPanel::GetMountedImageInfo(UStringVector& mountPaths, UStringVector& mount
         return;
     }
     ::GetMountedImageInfo(mountPaths, mountImages);
-    if (mountPaths.Size() == 0)
-    {
-        MessageBox_Error_LangID(IDS_MOUNTED_ENTRIES);
-        return;
-    }
 }

@@ -995,9 +995,9 @@ Z7_COM7F_IMF(CFSFolder::CopyTo(Int32 moveMode, const UInt32 *indices, UInt32 num
   return S_OK;
 }
 
-Z7_COM7F_IMF(CFSFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32 numItems,
+Z7_COM7F_IMF(CFSFolder::MountTo(Int32 unMountMode, const UInt32* /*indices*/, UInt32 numItems,
   Int32 /* includeAltStreams */, Int32 /* replaceAltStreamColon */,
-  const wchar_t* path, int imageIndex, IFolderOperationsExtractCallback* callback))
+  const wchar_t* path, int imageIndex, const wchar_t* imagePath, IFolderOperationsExtractCallback* callback))
 {
   if (numItems == 0)
     return S_OK;
@@ -1016,34 +1016,24 @@ Z7_COM7F_IMF(CFSFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32
   CFsFolderStat stat;
   stat.Progress = callback;
 
-  UInt32 i;
-  for (i = 0; i < numItems; i++)
+  CDirItem fiImage;
+  fiImage.Find(imagePath);
+
+  const CDirItem& fi = fiImage;
+  if (fi.IsDir())
   {
-    const UInt32 index = indices[i];
-    /*
-    if (index >= Files.Size())
+    if (!isAltDest)
     {
-      size += Streams[index - Files.Size()].Size;
-      // numFiles++;
-      continue;
+      stat.Path = _path;
+      stat.Path += GetRelPath(fi);
+      RINOK(stat.Enumerate())
     }
-    */
-    const CDirItem& fi = Files[index];
-    if (fi.IsDir())
-    {
-      if (!isAltDest)
-      {
-        stat.Path = _path;
-        stat.Path += GetRelPath(fi);
-        RINOK(stat.Enumerate())
-      }
-      stat.NumFolders++;
-    }
-    else
-    {
-      stat.NumFiles++;
-      stat.Size += fi.Size;
-    }
+    stat.NumFolders++;
+  }
+  else
+  {
+    stat.NumFiles++;
+    stat.Size += fi.Size;
   }
 
   /*
@@ -1072,35 +1062,29 @@ Z7_COM7F_IMF(CFSFolder::MountTo(Int32 unMountMode, const UInt32* indices, UInt32
   state.UseReadWriteMode = isAltDest;
   state.Prepare();
 
-  for (i = 0; i < numItems; i++)
+  FString destPath2 = destPath;
+
+  //if (!isDirectPath)
+  //  destPath2 += fi.Name;
+  FString srcPath;
+  GetFullPath(fi, srcPath);
+
+  if (fi.IsDir())
   {
-    const UInt32 index = indices[i];
-    if (index >= (UInt32)Files.Size())
-      continue;
-    const CDirItem& fi = Files[index];
-    FString destPath2 = destPath;
-
-    //if (!isDirectPath)
-    //  destPath2 += fi.Name;
-    FString srcPath;
-    GetFullPath(fi, srcPath);
-
-    if (fi.IsDir())
+    if (isAltDest)
     {
-      if (isAltDest)
-      {
-        RINOK(SendMessageError(callback, k_CannotCopyDirToAltStream, srcPath))
-      }
-      else
-      {
-        RINOK(CopyFolder(state, srcPath, destPath2))
-      }
+      RINOK(SendMessageError(callback, k_CannotCopyDirToAltStream, srcPath))
     }
     else
     {
-      RINOK(MountFile_Ask(state, srcPath, fi, destPath2, imageIndex))
+      RINOK(CopyFolder(state, srcPath, destPath2))
     }
   }
+  else
+  {
+    RINOK(MountFile_Ask(state, srcPath, fi, destPath2, imageIndex))
+  }
+
   return S_OK;
 }
 

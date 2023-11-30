@@ -445,7 +445,6 @@ HRESULT Extract(
     }
    #endif
 
-
     if (arcLink.Arcs.Size() != 0)
     {
       if (arcLink.GetArc()->IsHashHandler(op))
@@ -550,7 +549,6 @@ HRESULT Extract(
     if (archive->GetArchiveProperty(kpidNumImages, &prop) == S_OK) {
       numImages = prop.uintVal;
     }
-
 
     for (i = 0; i < numImages; i++) {
       prop.Clear();

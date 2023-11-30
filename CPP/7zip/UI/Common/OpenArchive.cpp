@@ -1903,7 +1903,6 @@ HRESULT CArc::OpenStream2(const COpenOptions &op)
   }
   FileSize = fileSize;
 
-
   #ifndef Z7_SFX
 
   CBoolArr skipFrontalFormat(op.codecs->Formats.Size());
@@ -1916,10 +1915,6 @@ HRESULT CArc::OpenStream2(const COpenOptions &op)
 
   const COpenType &mode = op.openType;
 
-  
-  
-
-  
   if (mode.CanReturnArc)
   {
     // ---------- OPEN main type by extenssion ----------
@@ -3321,7 +3316,6 @@ HRESULT CArchiveLink::Open(COpenOptions &op)
       if (mainSubfile >= numItems)
         break;
     }
-
   
     CMyComPtr<IInArchiveGetStream> getStream;
     if (arc.Archive->QueryInterface(IID_IInArchiveGetStream, (void **)&getStream) != S_OK || !getStream)

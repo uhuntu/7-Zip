@@ -247,16 +247,17 @@ void TestArchives(const UStringVector &arcPaths, bool hashMode)
       hashMode ? "hash" : NULL);
 }
 
-FString GuidArchives(UStringVector& arcPaths, bool hashMode)
+bool GuidArchives(UStringVector& arcPaths, UString& wimGuid)
 {
   CExtractOptions eo;
   eo.TestMode = true;
   ExtractGroupCommand(arcPaths,
     false, // showDialog
     eo,
-    hashMode ? "hash" : NULL);
+    NULL);
   arcPaths = eo.MountImages;
-  return eo.WimGuid;
+  wimGuid = eo.WimGuid;
+  return true;
 }
 
 bool GetMountedImageInfo_NT(UStringVector& mountPaths, UStringVector& mountImages);
@@ -300,7 +301,7 @@ bool GetMountedImageInfo_NT(UStringVector& mountPaths, UStringVector& mountImage
         OutputDebugStringW(L"ImageInfo[%d].ImageIndex: " + ImageInfo[i].ImageIndex);
         OutputDebugStringW(L"ImageInfo[%d].MountMode: " + ImageInfo[i].MountMode);
         OutputDebugStringW(L"ImageInfo[%d].MountStatus: " + ImageInfo[i].MountStatus);
-        mountPaths.Add(FString(ImageInfo[i].MountPath));
+        mountPaths.Add(FString(ImageInfo[i].MountPath) + L"\\");
         mountImages.Add(FString(ImageInfo[i].ImageFilePath));
     }
 

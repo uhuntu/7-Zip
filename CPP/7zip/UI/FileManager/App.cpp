@@ -542,7 +542,8 @@ UString CPanel::GetItemsInfoString(const CRecordVector<UInt32> &indices)
     info.Add_LF();
     info += "  ";
     const UInt32 index = indices[i];
-    info += GetItemRelPath(index);
+    UString file = GetItemRelPath(index);
+    info += file;
     if (IsItem_Folder(index))
       info.Add_PathSepar();
   }
@@ -869,25 +870,60 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
   CPanel& destPanel = Panels[destPanelIndex];
 
   UStringVector mountPaths;
+  UStringVector mountPaths_;
+  UStringVector mountPaths__;
   UStringVector mountImages;
 
   if (!unMount) {
-      FString guid = srcPanel.GuidArchives(mountPaths);
-      for (unsigned j = 0; j < mountPaths.Size(); j++) {
-          FString test = L"\\";
-          FString prev = L"C:\\";
-          wchar_t jj[10];
-          ConvertUInt32ToString(j + 1, jj);
-          FString tset = FString(jj);
-          mountPaths[j] = prev + guid + test + tset + test + mountPaths[j] + test;
+    UString wimGuid;
+    bool ret = srcPanel.GuidArchives(mountPaths, wimGuid);
+
+    if (!ret) {
+      return;
+    }
+
+    UStringVector unMountPaths;
+    UStringVector unMmountImages;
+
+    srcPanel.GetMountedImageInfo(unMountPaths, unMmountImages);
+
+    for (unsigned j = 0; j < mountPaths.Size(); j++) {
+        FString test = L"\\";
+        FString prev = L"C:\\";
+        wchar_t jj[10];
+        ConvertUInt32ToString(j + 1, jj);
+        FString tset = FString(jj);
+        mountPaths[j] = prev + wimGuid + test + tset + test + mountPaths[j] + test;
+    }
+
+    mountPaths_ = mountPaths; // keep the original paths
+
+    unMountPaths.Sort();
+    if (unMountPaths.Size() != 0) {
+      while (!mountPaths.IsEmpty()) {
+        UString back = mountPaths.Back();
+        if (unMountPaths.FindInSorted(back) == -1) {
+          mountPaths__.Add(back);
+        }
+        mountPaths.DeleteBack();
       }
+      mountPaths = mountPaths__;
+    }
+
+    if (mountPaths.Size() == 0) {
+      srcPanel.MessageBox_Error_LangID(IDS_MOUNTED_ENTRIES);
+      return;
+    }
   }
   else {
-      srcPanel.GetMountedImageInfo(mountPaths, mountImages);
-  }
+    srcPanel.GetMountedImageInfo(mountPaths, mountImages);
 
-  if (mountPaths.Size() == 0) {
+    mountPaths_ = mountPaths; // keep the original paths
+
+    if (mountPaths.Size() == 0) {
+      srcPanel.MessageBox_Error_LangID(IDS_MOUNTED_ENTRIES);
       return;
+    }
   }
 
   CPanel::CDisableTimerProcessing disableTimerProcessing1(destPanel);
@@ -906,7 +942,8 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
 
   CRecordVector<UInt32> indices;
   UString destPath;
-  int destIndex;
+  int destIndex = -1;
+  UString destImage;
   bool useDestPanel = false;
 
   {
@@ -923,9 +960,9 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
     }
     else
     {
-      srcPanel.Get_ItemIndices_OperSmart(indices);
-      if (indices.Size() == 0)
-        return;
+      srcPanel.Get_ItemIndices_Operated(indices);
+      //if (indices.Size() == 0)
+      //  return;
       destPath = destPanel.GetFsPath();
       if (NumPanels == 1)
         Reduce_Path_To_RealFileSystemPath(destPath);
@@ -959,7 +996,18 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
       return;
 
     destPath = copyDialog.Value;
-    destIndex = copyDialog.Index;
+    for (unsigned iii = 0; iii < mountPaths_.Size(); iii++) {
+      if (mountPaths_[iii].Compare(destPath) == 0) {
+        destIndex = iii;
+        break;
+      }
+    }
+    if (indices.Size() == 0) {
+      destImage = mountImages[destIndex];
+    }
+    else {
+      destImage = srcPanel.GetItemFullPath(indices[0]);
+    }
   }
 
   {
@@ -1123,6 +1171,7 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
     CCopyToOptions options;
     options.folder = useTemp ? fs2us(tempDirPrefix) : destPath;
     options.ImageIndex = destIndex + 1;
+    options.ImagePath = destImage;
     options.moveMode = unMount;
     options.unMountMode = unMount;
     options.mountMode = true;

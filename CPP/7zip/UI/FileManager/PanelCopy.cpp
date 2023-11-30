@@ -111,10 +111,10 @@ HRESULT CPanelCopyThread::ProcessVirt()
   else if (options->mountMode) {
     result2 = FolderOperations->MountTo(
       BoolToInt(options->unMountMode),
-      &Indices.Front(), Indices.Size(),
+      &Indices.Front(), 1,
       BoolToInt(options->includeAltStreams),
       BoolToInt(options->replaceAltStreamChars),
-      options->folder, options->ImageIndex, ExtractCallback);
+      options->folder, options->ImageIndex, options->ImagePath, ExtractCallback);
   }
   else {
     result2 = FolderOperations->CopyTo(
@@ -204,7 +204,6 @@ HRESULT CPanel::CopyTo(CCopyToOptions &options,
   extracter.CompressingMode = false;
 
   extracter.ExtractCallbackSpec->StreamMode = options.streamMode;
-
 
   if (indices.Size() == 1)
   {
@@ -357,7 +356,6 @@ HRESULT CPanel::MountTo(CCopyToOptions& options,
 
     extracter.ExtractCallbackSpec->StreamMode = options.streamMode;
 
-
     if (indices.Size() == 1)
     {
       extracter.Hash.FirstFileName = GetItemRelPath(indices[0]);
@@ -395,7 +393,7 @@ HRESULT CPanel::MountTo(CCopyToOptions& options,
     UString title;
     {
       UInt32 titleID = IDS_MOUNTING;
-      if (options.moveMode)
+      if (options.unMountMode)
         titleID = IDS_UNMOUNTING;
       else if (!options.hashMethods.IsEmpty() && options.streamMode)
       {
@@ -434,8 +432,6 @@ HRESULT CPanel::MountTo(CCopyToOptions& options,
     extracter.ExtractCallbackSpec->Password = password;
 
     RINOK(extracter.Create(title, GetParent()))
-
-
       if (messages)
         *messages = extracter.Sync.Messages;
 
