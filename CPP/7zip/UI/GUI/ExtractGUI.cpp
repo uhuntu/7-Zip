@@ -314,7 +314,7 @@ HRESULT ExtractGUI(
 
   extracter.IconID = IDI_ICON;
 
-  if (options.TestMode && !showDialog) {
+  if (!options.TestMode && !showDialog) {
     extracter.ProcessExtract();
   }
   else {

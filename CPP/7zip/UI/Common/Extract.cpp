@@ -561,7 +561,7 @@ HRESULT Extract(
       }
     }
 
-    if (wimGuid != L"null") {
+    if (!options.TestMode && wimGuid != L"null") {
       goto _out_;
     }
 

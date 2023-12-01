@@ -250,7 +250,7 @@ void TestArchives(const UStringVector &arcPaths, bool hashMode)
 bool GuidArchives(UStringVector& arcPaths, UString& wimGuid)
 {
   CExtractOptions eo;
-  eo.TestMode = true;
+  eo.TestMode = false;
   ExtractGroupCommand(arcPaths,
     false, // showDialog
     eo,
