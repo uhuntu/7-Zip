@@ -114,7 +114,7 @@ public:
   void DragBegin(unsigned panelIndex);
   void DragEnd();
   
-  void OnMount(bool move, bool copyToSame, unsigned srcPanelIndex);
+  void OnMount(bool move, bool jumpToSame, unsigned srcPanelIndex);
   void OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnSetSameFolder(unsigned srcPanelIndex);
   void OnSetSubFolder(unsigned srcPanelIndex);
@@ -139,6 +139,7 @@ public:
   void Rename() { GetFocusedPanel().RenameFile(); }
   void MountTo() { OnMount(false, false, GetFocusedPanelIndex()); }
   void UnMountFrom() { OnMount(true, false, GetFocusedPanelIndex()); }
+  void JumpTo() { OnMount(true, true, GetFocusedPanelIndex()); }
   void CopyTo() { OnCopy(false, false, GetFocusedPanelIndex()); }
   void MoveTo() { OnCopy(true, false, GetFocusedPanelIndex()); }
   void Delete(bool toRecycleBin) { GetFocusedPanel().DeleteItems(toRecycleBin); }

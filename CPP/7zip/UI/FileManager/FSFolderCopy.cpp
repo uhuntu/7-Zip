@@ -411,7 +411,7 @@ bool CCopyState::UnMountFile_NT(const wchar_t* newFile)
       OutputDebugStringW(L"Unmounting: ");
 
       hrLocal = DismUnmountImage(newFile,
-          DISM_DISCARD_IMAGE,
+          DISM_COMMIT_IMAGE,
           NULL,
           MountProgressCallback,
           &ProgressInfo);

@@ -17,6 +17,7 @@
 #define IDB_EXPAND   112
 #define IDB_WIMINFO  113
 #define IDB_UNMOUNT  114
+#define IDB_JUMP     115
 
 #define IDB_ADD2     150
 #define IDB_EXTRACT2 151
@@ -31,6 +32,7 @@
 #define IDB_EXPAND2  172
 #define IDB_WIMINFO2 173
 #define IDB_UNMOUNT2 174
+#define IDB_JUMP2    175
 
 #define IDM_HASH_ALL             101
 #define IDM_CRC32                102
@@ -51,6 +53,7 @@
 #define IDM_EXPAND_TO            512
 #define IDM_WIM_INFO             513
 #define IDM_UNMOUNT_FROM         514
+#define IDM_JUMP_TO              515
 
 #define IDM_OPEN                 540
 #define IDM_OPEN_INSIDE          541
@@ -163,6 +166,7 @@
 #define IDS_UNMOUNT_FROM                6021
 #define IDS_MOUNTING                    6022
 #define IDS_UNMOUNTING                  6023
+#define IDS_JUMP_TO                     6024
 
 #define IDS_CONFIRM_FILE_DELETE         6100
 #define IDS_CONFIRM_FOLDER_DELETE       6101
@@ -210,6 +214,7 @@
 #define IDS_EXPAND                      7212
 #define IDS_WIMINFO                     7213
 #define IDS_UNMOUNT                     7214
+#define IDS_JUMP                        7215
 
 #define IDS_SPLITTING                   7303
 #define IDS_SPLIT_CONFIRM_TITLE         7304

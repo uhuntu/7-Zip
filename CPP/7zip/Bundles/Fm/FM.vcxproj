@@ -508,6 +508,8 @@
     <Image Include="..\..\UI\FileManager\FM.ico" />
     <Image Include="..\..\UI\FileManager\Info.bmp" />
     <Image Include="..\..\UI\FileManager\Info2.bmp" />
+    <Image Include="..\..\UI\FileManager\Jump.bmp" />
+    <Image Include="..\..\UI\FileManager\Jump2.bmp" />
     <Image Include="..\..\UI\FileManager\Mount.bmp" />
     <Image Include="..\..\UI\FileManager\Mount2.bmp" />
     <Image Include="..\..\UI\FileManager\Move.bmp" />

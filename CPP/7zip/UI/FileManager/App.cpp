@@ -58,7 +58,7 @@ void CPanelCallbackImp::SetFocusToPath(unsigned index)
   _app->Panels[newPanelIndex]._headerComboBox.ShowDropDown();
 }
 
-void CPanelCallbackImp::OnMount(bool move, bool copyToSame) { _app->OnMount(move, copyToSame, _index); }
+void CPanelCallbackImp::OnMount(bool move, bool jumpToSame) { _app->OnMount(move, jumpToSame, _index); }
 void CPanelCallbackImp::OnCopy(bool move, bool copyToSame) { _app->OnCopy(move, copyToSame, _index); }
 void CPanelCallbackImp::OnSetSameFolder() { _app->OnSetSameFolder(_index); }
 void CPanelCallbackImp::OnSetSubFolder()  { _app->OnSetSubFolder(_index); }
@@ -203,6 +203,7 @@ static const CButtonInfo g_WimDismButtons[] =
 {
   { IDM_MOUNT_TO,   IDB_MOUNT,  IDB_MOUNT2,  IDS_MOUNT },
   {IDM_UNMOUNT_FROM,IDB_UNMOUNT,IDB_UNMOUNT2,IDS_UNMOUNT },
+  { IDM_JUMP_TO,    IDB_JUMP,   IDB_JUMP2,   IDS_JUMP },
   // { IDM_NEW_FROM,   IDB_NEW,    IDB_NEW2,    IDS_NEW },
   // { IDM_EXPAND_TO,  IDB_EXPAND, IDB_EXPAND2, IDS_EXPAND },
   { IDM_WIM_INFO,   IDB_WIMINFO,IDB_WIMINFO2,IDS_WIMINFO }
@@ -863,7 +864,7 @@ void CApp::OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex)
   srcPanel.SetFocusToList();
 }
 
-void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
+void CApp::OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex)
 {
   const unsigned destPanelIndex = (NumPanels <= 1) ? srcPanelIndex : (1 - srcPanelIndex);
   CPanel& srcPanel = Panels[srcPanelIndex];
@@ -888,12 +889,12 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
     srcPanel.GetMountedImageInfo(unMountPaths, unMmountImages);
 
     for (unsigned j = 0; j < mountPaths.Size(); j++) {
-        FString test = L"\\";
-        FString prev = L"C:\\";
-        wchar_t jj[10];
-        ConvertUInt32ToString(j + 1, jj);
-        FString tset = FString(jj);
-        mountPaths[j] = prev + wimGuid + test + tset + test + mountPaths[j] + test;
+      FString test = L"\\";
+      FString prev = L"C:\\";
+      wchar_t jj[10];
+      ConvertUInt32ToString(j + 1, jj);
+      FString tset = FString(jj);
+      mountPaths[j] = prev + wimGuid + test + tset + test + mountPaths[j] + test;
     }
 
     mountPaths_ = mountPaths; // keep the original paths
@@ -947,33 +948,19 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
   bool useDestPanel = false;
 
   {
-    if (copyToSame)
-    {
-      const int focusedItem = srcPanel._listView.GetFocusedItem();
-      if (focusedItem < 0)
-        return;
-      const unsigned realIndex = srcPanel.GetRealItemIndex(focusedItem);
-      if (realIndex == kParentIndex)
-        return;
-      indices.Add(realIndex);
-      destPath = srcPanel.GetItemName(realIndex);
-    }
-    else
-    {
-      srcPanel.Get_ItemIndices_Operated(indices);
-      //if (indices.Size() == 0)
-      //  return;
-      destPath = destPanel.GetFsPath();
-      if (NumPanels == 1)
-        Reduce_Path_To_RealFileSystemPath(destPath);
-    }
+    srcPanel.Get_ItemIndices_Operated(indices);
+    //if (indices.Size() == 0)
+    //  return;
+    destPath = destPanel.GetFsPath();
+    if (NumPanels == 1)
+      Reduce_Path_To_RealFileSystemPath(destPath);
   }
 
   if (mountPaths.Size() == 0) {
-      destPath = L"";
+    destPath = L"";
   }
   else {
-      destPath = mountPaths[0];
+    destPath = mountPaths[0];
   }
 
   UStringVector copyFolders;
@@ -988,8 +975,16 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
 
     copyDialog.Strings = copyFolders;
     copyDialog.Value = destPath;
-    LangString(unMount ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
-    LangString(unMount ? IDS_UNMOUNT_FROM : IDS_MOUNT_TO, copyDialog.Static);
+
+    if (jumpToSame) {
+      LangString(IDS_JUMP, copyDialog.Title);
+      LangString(IDS_JUMP_TO, copyDialog.Static);
+    }
+    else {
+      LangString(unMount ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
+      LangString(unMount ? IDS_UNMOUNT_FROM : IDS_MOUNT_TO, copyDialog.Static);
+    }
+
     copyDialog.Info = srcPanel.GetItemsInfoString(indices);
 
     if (copyDialog.Create(srcPanel.GetParent()) != IDOK)
@@ -1179,7 +1174,12 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
     options.replaceAltStreamChars = false;
     options.showErrorMessages = true;
 
-    result = srcPanel.MountTo(options, indices, NULL);
+    if (jumpToSame) {
+      result = destPanel.BindToPathAndRefresh(destPath);
+    }
+    else {
+      result = srcPanel.MountTo(options, indices, NULL);
+    }
   }
 
   if (result == S_OK && useDestPanel)
@@ -1223,16 +1223,13 @@ void CApp::OnMount(bool unMount, bool copyToSame, unsigned srcPanelIndex)
 
   RefreshTitleAlways();
 
-  if (copyToSame || unMount)
+  if (unMount)
   {
     srcPanel.RefreshListCtrl(srcSelState);
   }
 
-  if (!copyToSame)
-  {
-    destPanel.RefreshListCtrl(destSelState);
-    srcPanel.KillSelection();
-  }
+  destPanel.RefreshListCtrl(destSelState);
+  srcPanel.KillSelection();
 
   disableNotify1.Restore();
   disableNotify2.Restore();
