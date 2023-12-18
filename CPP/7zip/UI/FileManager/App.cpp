@@ -8,6 +8,7 @@
 #include "../../../Windows/FileName.h"
 #include "../../../Windows/PropVariantConv.h"
 #include "../../../Common/IntToString.h"
+#include "../FileManager/ListViewDialog.h"
 
 /*
 #include "Windows/COM.h"
@@ -29,6 +30,7 @@
 #include "ViewSettings.h"
 
 #include "PropertyNameRes.h"
+#include "DismApi.h"
 
 using namespace NWindows;
 using namespace NFile;
@@ -58,7 +60,8 @@ void CPanelCallbackImp::SetFocusToPath(unsigned index)
   _app->Panels[newPanelIndex]._headerComboBox.ShowDropDown();
 }
 
-void CPanelCallbackImp::OnMount(bool move, bool jumpToSame) { _app->OnMount(move, jumpToSame, _index); }
+void CPanelCallbackImp::OnFeature(bool unMount, bool jumpToSame) { _app->OnFeature(unMount, jumpToSame, _index); }
+void CPanelCallbackImp::OnMount(bool unMount, bool jumpToSame) { _app->OnMount(unMount, jumpToSame, _index); }
 void CPanelCallbackImp::OnCopy(bool move, bool copyToSame) { _app->OnCopy(move, copyToSame, _index); }
 void CPanelCallbackImp::OnSetSameFolder() { _app->OnSetSameFolder(_index); }
 void CPanelCallbackImp::OnSetSubFolder()  { _app->OnSetSubFolder(_index); }
@@ -204,6 +207,7 @@ static const CButtonInfo g_WimDismButtons[] =
   { IDM_MOUNT_TO,   IDB_MOUNT,  IDB_MOUNT2,  IDS_MOUNT },
   {IDM_UNMOUNT_FROM,IDB_UNMOUNT,IDB_UNMOUNT2,IDS_UNMOUNT },
   { IDM_JUMP_TO,    IDB_JUMP,   IDB_JUMP2,   IDS_JUMP },
+  { IDM_FEATURE,    IDB_FEATURE,IDB_FEATURE2,IDS_FEATURE },
   // { IDM_NEW_FROM,   IDB_NEW,    IDB_NEW2,    IDS_NEW },
   // { IDM_EXPAND_TO,  IDB_EXPAND, IDB_EXPAND2, IDS_EXPAND },
   { IDM_WIM_INFO,   IDB_WIMINFO,IDB_WIMINFO2,IDS_WIMINFO }
@@ -862,6 +866,112 @@ void CApp::OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex)
   disableNotify1.Restore();
   disableNotify2.Restore();
   srcPanel.SetFocusToList();
+}
+
+struct CFeatureProperty
+{
+  UString Name;
+  bool State;
+};
+
+typedef CObjectVector<CFeatureProperty> CPropNameStatePairs;
+
+static void AddFeaturePair(CPropNameStatePairs& pairs, UString name, bool state)
+{
+  CFeatureProperty& pair = pairs.AddNew();
+  pair.Name = name;
+  pair.State = state;
+}
+
+void CApp::OnFeature(bool /*unMount*/, bool /*jumpToSame*/, unsigned srcPanelIndex)
+{
+  CListViewDialog lv;
+
+  CPanel& srcPanel = Panels[srcPanelIndex];
+
+  CPropNameStatePairs propPairs;
+
+  AddFeaturePair(propPairs, L"Microsoft-Hyper-V-Management-Clients", true);
+  AddFeaturePair(propPairs, L"Windows-Defender-ApplicationGuard", false);
+
+  FOR_VECTOR(i, propPairs)
+  {
+   const CFeatureProperty& pair = propPairs[i];
+   lv.Strings.Add(pair.Name);
+   lv.Values.Add(pair.State ? L"Enabled" : L"Disabled");
+  }
+
+  lv.Title = LangString(IDS_CHECKSUM_INFORMATION);
+  lv.DeleteIsAllowed = true;
+  lv.SelectFirst = false;
+  lv.NumColumns = 2;
+
+  if (lv.Create(srcPanel.GetParent()) != IDOK)
+    return;
+}
+
+static FString HrToString(HRESULT hr) {
+    wchar_t ii[100];
+    ConvertInt64ToString(hr, ii);
+    FString hrs = FString(ii);
+    return hrs;
+}
+
+bool GetWindowsOptionalFeature_NT(UStringVector& mountPaths, UStringVector& mountImages)
+{
+    HRESULT hr = S_OK;
+    HRESULT hrLocal = S_OK;
+
+    // Initialize the API
+    hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
+    if (FAILED(hr))
+    {
+        FString message = L"DismInitialize Failed: ";
+        OutputDebugStringW(message + HrToString(hr));
+
+        goto Cleanup;
+    }
+
+    DismMountedImageInfo* ImageInfo;
+    UINT ImageInfoCount;
+
+    hr = DismGetMountedImageInfo(&ImageInfo, &ImageInfoCount);
+
+    if (FAILED(hr))
+    {
+        OutputDebugStringW(L"DismGetMountedImageInfo Failed: " + HrToString(hr));
+        goto Cleanup;
+    }
+
+    for (unsigned i = 0; i < ImageInfoCount; i++) {
+        OutputDebugStringW(L"ImageInfo[%d].MountPath: " + FString(ImageInfo[i].MountPath));
+        OutputDebugStringW(L"ImageInfo[%d].ImageFilePath: " + FString(ImageInfo[i].ImageFilePath));
+        OutputDebugStringW(L"ImageInfo[%d].ImageIndex: " + ImageInfo[i].ImageIndex);
+        OutputDebugStringW(L"ImageInfo[%d].MountMode: " + ImageInfo[i].MountMode);
+        OutputDebugStringW(L"ImageInfo[%d].MountStatus: " + ImageInfo[i].MountStatus);
+        mountPaths.Add(FString(ImageInfo[i].MountPath) + L"\\");
+        mountImages.Add(FString(ImageInfo[i].ImageFilePath));
+    }
+
+Cleanup:
+
+    // Shutdown the DISM API to free up remaining resources
+    hrLocal = DismShutdown();
+    if (FAILED(hrLocal))
+    {
+        FString message = L"DismShutdown Failed: ";
+        OutputDebugStringW(message + HrToString(hr));
+    }
+
+    FString message = L"Return code is: ";
+    OutputDebugStringW(message + HrToString(hr));
+
+    if (hr == S_OK) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 void CApp::OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex)

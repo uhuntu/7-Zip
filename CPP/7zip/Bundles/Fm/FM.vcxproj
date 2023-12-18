@@ -505,6 +505,8 @@
     <Image Include="..\..\UI\FileManager\Expand2.bmp" />
     <Image Include="..\..\UI\FileManager\Extract.bmp" />
     <Image Include="..\..\UI\FileManager\Extract2.bmp" />
+    <Image Include="..\..\UI\FileManager\Feature.bmp" />
+    <Image Include="..\..\UI\FileManager\Feature2.bmp" />
     <Image Include="..\..\UI\FileManager\FM.ico" />
     <Image Include="..\..\UI\FileManager\Info.bmp" />
     <Image Include="..\..\UI\FileManager\Info2.bmp" />

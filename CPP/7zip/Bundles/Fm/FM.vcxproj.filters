@@ -137,6 +137,10 @@
       <Filter>Spec</Filter>
     </Image>
     <Image Include="..\..\UI\FileManager\Jump2.bmp" />
+    <Image Include="..\..\UI\FileManager\Feature.bmp">
+      <Filter>Spec</Filter>
+    </Image>
+    <Image Include="..\..\UI\FileManager\Feature2.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\UI\FileManager\ClassDefs.cpp">

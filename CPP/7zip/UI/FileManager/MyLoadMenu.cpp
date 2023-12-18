@@ -728,6 +728,7 @@ bool ExecuteDismCommand(unsigned id)
     case IDM_MOUNT_TO: g_App.MountTo(); break;
     case IDM_UNMOUNT_FROM: g_App.UnMountFrom(); break;
     case IDM_JUMP_TO: g_App.JumpTo(); break;
+    case IDM_FEATURE: g_App.Feature(); break;
     default: return false;
   }
 	return true;
