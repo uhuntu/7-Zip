@@ -18,6 +18,7 @@ class CListViewDialog: public NWindows::NControl::CModalDialog
   void CopyToClipboard();
   void DeleteItems();
   void ShowItemInfo();
+  void ShowDismItemInfo();
   void OnEnter();
 public:
   UString Title;
@@ -26,6 +27,9 @@ public:
   bool DeleteIsAllowed;
   bool StringsWereChanged;
   
+  bool ShowDism;
+  UString mountPath;
+
   UStringVector Strings;
   UStringVector Values;
   
@@ -42,5 +46,20 @@ public:
     NumColumns(1)
     {}
 };
+
+#include "DismApi.h"
+
+struct CFeatureProperty
+{
+  UString FeatureName;
+  DismPackageFeatureState FeatureState;
+  UString DisplayName;
+  UString Description;
+  DismRestartType RestartRequired;
+  DismCustomProperty* CustomProperty;
+  UINT CustomPropertyCount;
+};
+
+typedef CObjectVector<CFeatureProperty> CPropNameStatePairs;
 
 #endif

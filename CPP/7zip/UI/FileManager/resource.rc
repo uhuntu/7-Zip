@@ -215,6 +215,7 @@ BEGIN
   IDS_MOUNT_TO  "Mount to:"
   IDS_UNMOUNT_FROM  "UnMount from:"
   IDS_JUMP_TO   "Jump to:"
+  IDS_FEATURE_OF "Feature of:"
   IDS_COPYING   "Copying..."
   IDS_MOVING    "Moving..."
   IDS_RENAMING  "Renaming..."

@@ -170,6 +170,7 @@
 #define IDS_MOUNTING                    6022
 #define IDS_UNMOUNTING                  6023
 #define IDS_JUMP_TO                     6024
+#define IDS_FEATURE_OF                  6025
 
 #define IDS_CONFIRM_FILE_DELETE         6100
 #define IDS_CONFIRM_FOLDER_DELETE       6101

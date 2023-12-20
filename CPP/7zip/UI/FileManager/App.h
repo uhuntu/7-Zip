@@ -53,8 +53,8 @@ public:
   }
   virtual void OnTab() Z7_override;
   virtual void SetFocusToPath(unsigned index) Z7_override;
-  virtual void OnFeature(bool unMount, bool jumpToSame) Z7_override;
-  virtual void OnMount(bool unMount, bool jumpToSame) Z7_override;
+  virtual void OnFeature(UString destPath) Z7_override;
+  virtual void OnMount(bool unMount, bool jumpTo, bool featureOf) Z7_override;
   virtual void OnCopy(bool move, bool copyToSame) Z7_override;
   virtual void OnSetSameFolder() Z7_override;
   virtual void OnSetSubFolder() Z7_override;
@@ -115,8 +115,8 @@ public:
   void DragBegin(unsigned panelIndex);
   void DragEnd();
   
-  void OnFeature(bool unMount, bool jumpToSame, unsigned srcPanelIndex);
-  void OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex);
+  void OnFeature(UString destPath, unsigned srcPanelIndex);
+  void OnMount(bool unMount, bool jumpTo, bool featureOf, unsigned srcPanelIndex);
   void OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex);
   void OnSetSameFolder(unsigned srcPanelIndex);
   void OnSetSubFolder(unsigned srcPanelIndex);
@@ -139,10 +139,10 @@ public:
   void OpenItemOutside() { GetFocusedPanel().OpenSelectedItems(false); }
   void EditItem(bool useEditor) { GetFocusedPanel().EditItem(useEditor); }
   void Rename() { GetFocusedPanel().RenameFile(); }
-  void MountTo() { OnMount(false, false, GetFocusedPanelIndex()); }
-  void UnMountFrom() { OnMount(true, false, GetFocusedPanelIndex()); }
-  void JumpTo() { OnMount(true, true, GetFocusedPanelIndex()); }
-  void Feature() { OnFeature(true, true, GetFocusedPanelIndex()); }
+  void MountTo() { OnMount(false, false, false, GetFocusedPanelIndex()); }
+  void UnMountFrom() { OnMount(true, false, false, GetFocusedPanelIndex()); }
+  void JumpTo() { OnMount(true, true, false, GetFocusedPanelIndex()); }
+  void Feature() { OnMount(true, true, true, GetFocusedPanelIndex()); }
   void CopyTo() { OnCopy(false, false, GetFocusedPanelIndex()); }
   void MoveTo() { OnCopy(true, false, GetFocusedPanelIndex()); }
   void Delete(bool toRecycleBin) { GetFocusedPanel().DeleteItems(toRecycleBin); }

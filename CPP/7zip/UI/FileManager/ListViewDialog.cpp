@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 
 #include "../../../Windows/Clipboard.h"
+#include "../../../Common/IntToString.h"
 
 #include "EditDialog.h"
 #include "ListViewDialog.h"
@@ -222,6 +223,185 @@ void CListViewDialog::ShowItemInfo()
   dlg.Create(*this);
 }
 
+static FString HrToString(HRESULT hr) {
+  wchar_t ii[100];
+  ConvertInt64ToString(hr, ii);
+  FString hrs = FString(ii);
+  return hrs;
+}
+
+bool GetWindowsOptionalFeatureInfo_Cleanup(DismSession* pSession, DismFeatureInfo** ppFeatureInfo, DismString* pErrorString);
+
+bool GetWindowsOptionalFeatureInfo_NT(DismSession* pSession, DismFeatureInfo** ppFeatureInfo, UString mountPath, UString featureName)
+{
+  HRESULT hr = S_OK;
+  HRESULT hrLocal = S_OK;
+  DismString* pErrorString = NULL;
+
+  // Initialize the API
+  hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
+  if (FAILED(hr))
+  {
+    FString message = L"DismInitialize Failed: ";
+    OutputDebugStringW(message + HrToString(hr));
+
+    return GetWindowsOptionalFeatureInfo_Cleanup(pSession, ppFeatureInfo, pErrorString);
+  }
+
+  // Open a session against the mounted image
+  hr = DismOpenSession(mountPath,
+    NULL,
+    NULL,
+    pSession);
+  if (FAILED(hr))
+  {
+    OutputDebugStringW(L"DismOpenSession Failed: " + HrToString(hr));
+    return GetWindowsOptionalFeatureInfo_Cleanup(pSession, ppFeatureInfo, pErrorString);
+  }
+
+  // Get the feature info for a non-existent feature to demonstrate error
+  // functionality
+  hr = DismGetFeatureInfo(*pSession,
+    featureName,
+    NULL,
+    DismPackageNone,
+    ppFeatureInfo);
+
+  if (FAILED(hr))
+  {
+    OutputDebugStringW(L"DismGetFeatureInfo Failed: " + HrToString(hr));
+
+    hrLocal = DismGetLastErrorMessage(&pErrorString);
+    if (FAILED(hrLocal))
+    {
+      OutputDebugStringW(L"DismGetLastErrorMessage Failed: " + HrToString(hr));
+      return GetWindowsOptionalFeatureInfo_Cleanup(pSession, ppFeatureInfo, pErrorString);
+    }
+    else
+    {
+      OutputDebugStringW(L"The last error string was: " + UString(pErrorString->Value));
+    }
+  }
+
+  return true;
+}
+
+bool GetWindowsOptionalFeatureInfo_Cleanup(DismSession *pSession, DismFeatureInfo** ppFeatureInfo, DismString* pErrorString)
+{
+  HRESULT hrLocal = S_OK;
+
+  // Delete the memory associated with the objects that were returned.
+  // pFeatureInfo should be NULL due to the expected failure above, but the
+  // DismDelete function will still return success in this case.
+  hrLocal = DismDelete(*ppFeatureInfo);
+  if (FAILED(hrLocal))
+  {
+    OutputDebugStringW(L"DismDelete Failed: " + HrToString(hrLocal));
+  }
+
+  hrLocal = DismDelete(pErrorString);
+  if (FAILED(hrLocal))
+  {
+    OutputDebugStringW(L"DismDelete Failed: " + HrToString(hrLocal));
+  }
+
+  // Close the DismSession to free up resources tied to the offline session
+  hrLocal = DismCloseSession(*pSession);
+  if (FAILED(hrLocal))
+  {
+    OutputDebugStringW(L"DismCloseSession Failed: " + HrToString(hrLocal));
+  }
+
+  // Shutdown the DISM API to free up remaining resources
+  hrLocal = DismShutdown();
+  if (FAILED(hrLocal))
+  {
+    FString message = L"DismShutdown Failed: ";
+    OutputDebugStringW(message + HrToString(hrLocal));
+  }
+
+  FString message = L"Return code is: ";
+  OutputDebugStringW(message + HrToString(hrLocal));
+
+  if (hrLocal == S_OK) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void CListViewDialog::ShowDismItemInfo()
+{
+  CUIntVector indexes;
+  ListView_GetSelected(_listView, indexes);
+  if (indexes.Size() != 1)
+    return;
+  unsigned index = indexes[0];
+
+  CEditDialog dlg;
+  if (NumColumns == 1)
+    dlg.Text = Strings[index];
+  else
+  {
+    dlg.Title = Strings[index];
+    DismFeatureInfo* pFeatureInfo = NULL;
+    DismSession session = DISM_SESSION_DEFAULT;
+
+    GetWindowsOptionalFeatureInfo_NT(&session, &pFeatureInfo, mountPath, dlg.Title);
+
+    if (index < Values.Size()) {
+      UString featureName = Strings[index];
+      UString featureState = Values[index];
+
+      UString text;
+      
+      text += L"FeatureName: " + featureName + L"\r\n";
+      text += L"FeatureState: " + featureState + L"\r\n";
+      text += L"DisplayName: " + UString(pFeatureInfo->DisplayName) + L"\r\n";
+      text += L"Description: " + UString(pFeatureInfo->Description) + L"\r\n";
+
+      UString restartRequired = L"No";
+      switch (pFeatureInfo->RestartRequired) {
+        case DismRestartNo:
+          restartRequired = L"No";
+          break;
+        case DismRestartPossible:
+          restartRequired = L"Possible";
+          break;
+        case DismRestartRequired:
+          restartRequired = L"Required";
+          break;
+        default:
+          restartRequired = L"No";
+          break;
+      }
+      text += L"RestartRequired: " + restartRequired + L"\r\n";
+
+      text += L"CustomProperty:\r\n";
+      for (UINT i = 0; i < pFeatureInfo->CustomPropertyCount; ++i)
+      {
+        wchar_t ii[10];
+        ConvertUInt32ToString(i, ii);
+        text += L"CustomProperty[" + UString(ii) + L"]:\r\n";
+        text += L"Name: " + UString(pFeatureInfo->CustomProperty[i].Name) + L"\r\n";
+        text += L"Value: " + UString(pFeatureInfo->CustomProperty[i].Value) + L"\r\n";
+        text += L"Path: " + UString(pFeatureInfo->CustomProperty[i].Path) + L"\r\n";
+      }
+
+      GetWindowsOptionalFeatureInfo_Cleanup(&session, &pFeatureInfo, NULL);
+
+      dlg.Text = text;
+    }
+  }
+
+#ifdef _WIN32
+  if (dlg.Text.Find(L'\r') < 0)
+    dlg.Text.Replace(L"\n", L"\r\n");
+#endif
+
+  dlg.Create(*this);
+}
 
 void CListViewDialog::DeleteItems()
 {
@@ -249,7 +429,12 @@ void CListViewDialog::OnEnter()
   if (IsKeyDown(VK_MENU)
       || NumColumns > 1)
   {
-    ShowItemInfo();
+    if (ShowDism) {
+      ShowDismItemInfo();
+    }
+    else {
+      ShowItemInfo();
+    }
     return;
   }
   OnOK();

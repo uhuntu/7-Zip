@@ -30,7 +30,6 @@
 #include "ViewSettings.h"
 
 #include "PropertyNameRes.h"
-#include "DismApi.h"
 
 using namespace NWindows;
 using namespace NFile;
@@ -60,8 +59,8 @@ void CPanelCallbackImp::SetFocusToPath(unsigned index)
   _app->Panels[newPanelIndex]._headerComboBox.ShowDropDown();
 }
 
-void CPanelCallbackImp::OnFeature(bool unMount, bool jumpToSame) { _app->OnFeature(unMount, jumpToSame, _index); }
-void CPanelCallbackImp::OnMount(bool unMount, bool jumpToSame) { _app->OnMount(unMount, jumpToSame, _index); }
+void CPanelCallbackImp::OnFeature(UString destPath) { _app->OnFeature(destPath, _index); }
+void CPanelCallbackImp::OnMount(bool unMount, bool jumpTo, bool featureOf) { _app->OnMount(unMount, jumpTo, featureOf, _index); }
 void CPanelCallbackImp::OnCopy(bool move, bool copyToSame) { _app->OnCopy(move, copyToSame, _index); }
 void CPanelCallbackImp::OnSetSameFolder() { _app->OnSetSameFolder(_index); }
 void CPanelCallbackImp::OnSetSubFolder()  { _app->OnSetSubFolder(_index); }
@@ -868,22 +867,9 @@ void CApp::OnCopy(bool move, bool copyToSame, unsigned srcPanelIndex)
   srcPanel.SetFocusToList();
 }
 
-struct CFeatureProperty
-{
-  UString Name;
-  bool State;
-};
+bool GetWindowsOptionalFeature_NT(CPropNameStatePairs& pairs, UString mountPath);
 
-typedef CObjectVector<CFeatureProperty> CPropNameStatePairs;
-
-static void AddFeaturePair(CPropNameStatePairs& pairs, UString name, bool state)
-{
-  CFeatureProperty& pair = pairs.AddNew();
-  pair.Name = name;
-  pair.State = state;
-}
-
-void CApp::OnFeature(bool /*unMount*/, bool /*jumpToSame*/, unsigned srcPanelIndex)
+void CApp::OnFeature(UString mountPath, unsigned srcPanelIndex)
 {
   CListViewDialog lv;
 
@@ -891,36 +877,78 @@ void CApp::OnFeature(bool /*unMount*/, bool /*jumpToSame*/, unsigned srcPanelInd
 
   CPropNameStatePairs propPairs;
 
-  AddFeaturePair(propPairs, L"Microsoft-Hyper-V-Management-Clients", true);
-  AddFeaturePair(propPairs, L"Windows-Defender-ApplicationGuard", false);
+  GetWindowsOptionalFeature_NT(propPairs, mountPath);
 
   FOR_VECTOR(i, propPairs)
   {
    const CFeatureProperty& pair = propPairs[i];
-   lv.Strings.Add(pair.Name);
-   lv.Values.Add(pair.State ? L"Enabled" : L"Disabled");
+   lv.Strings.Add(pair.FeatureName);
+   UString state = L"NotPresent";
+   switch (pair.FeatureState) {
+   case DismStateNotPresent:
+     state = L"StateNotPresent";
+     break;
+   case DismStateUninstallPending:
+     state = L"UninstallPending";
+     break;
+   case DismStateStaged:
+     state = L"Staged";
+     break;
+   case DismStateRemoved:
+     state = L"Removed";
+   break;
+   case DismStateInstalled:
+     state = L"Installed";
+     break;
+   case DismStateInstallPending:
+     state = L"InstallPending";
+     break;
+   case DismStateSuperseded:
+     state = L"Superseded";
+     break;
+   case DismStatePartiallyInstalled:
+     state = L"PartiallyInstalled";
+     break;
+   default:
+     state = L"NotPresent";
+     break;
+   }
+   lv.Values.Add(state);
   }
 
   lv.Title = LangString(IDS_CHECKSUM_INFORMATION);
   lv.DeleteIsAllowed = true;
   lv.SelectFirst = false;
   lv.NumColumns = 2;
+  lv.ShowDism = true;
+  lv.mountPath = mountPath;
 
   if (lv.Create(srcPanel.GetParent()) != IDOK)
     return;
 }
 
 static FString HrToString(HRESULT hr) {
-    wchar_t ii[100];
-    ConvertInt64ToString(hr, ii);
-    FString hrs = FString(ii);
-    return hrs;
+  wchar_t ii[100];
+  ConvertInt64ToString(hr, ii);
+  FString hrs = FString(ii);
+  return hrs;
 }
 
-bool GetWindowsOptionalFeature_NT(UStringVector& mountPaths, UStringVector& mountImages)
+static void AddFeaturePair(CPropNameStatePairs& pairs, UString name, DismPackageFeatureState state)
+{
+  CFeatureProperty& pair = pairs.AddNew();
+  pair.FeatureName = name;
+  pair.FeatureState = state;
+  pair.DisplayName = name;
+}
+
+bool GetWindowsOptionalFeature_NT(CPropNameStatePairs& pairs, UString mountPath)
 {
     HRESULT hr = S_OK;
     HRESULT hrLocal = S_OK;
+    DismSession session = DISM_SESSION_DEFAULT;
+    DismFeature* pFeatures = NULL;
+    UINT uiCount = 0;
 
     // Initialize the API
     hr = DismInitialize(DismLogErrorsWarningsInfo, L"C:\\MyLogFile.txt", NULL);
@@ -932,28 +960,54 @@ bool GetWindowsOptionalFeature_NT(UStringVector& mountPaths, UStringVector& moun
         goto Cleanup;
     }
 
-    DismMountedImageInfo* ImageInfo;
-    UINT ImageInfoCount;
-
-    hr = DismGetMountedImageInfo(&ImageInfo, &ImageInfoCount);
-
+    // Open a session against the mounted image
+    hr = DismOpenSession(mountPath,
+      NULL,
+      NULL,
+      &session);
     if (FAILED(hr))
     {
-        OutputDebugStringW(L"DismGetMountedImageInfo Failed: " + HrToString(hr));
-        goto Cleanup;
+      FString message = L"DismOpenSession Failed: ";
+      OutputDebugStringW(message + HrToString(hr));
+      goto Cleanup;
     }
 
-    for (unsigned i = 0; i < ImageInfoCount; i++) {
-        OutputDebugStringW(L"ImageInfo[%d].MountPath: " + FString(ImageInfo[i].MountPath));
-        OutputDebugStringW(L"ImageInfo[%d].ImageFilePath: " + FString(ImageInfo[i].ImageFilePath));
-        OutputDebugStringW(L"ImageInfo[%d].ImageIndex: " + ImageInfo[i].ImageIndex);
-        OutputDebugStringW(L"ImageInfo[%d].MountMode: " + ImageInfo[i].MountMode);
-        OutputDebugStringW(L"ImageInfo[%d].MountStatus: " + ImageInfo[i].MountStatus);
-        mountPaths.Add(FString(ImageInfo[i].MountPath) + L"\\");
-        mountImages.Add(FString(ImageInfo[i].ImageFilePath));
+    // Get a list of all of the features in the image
+    hr = DismGetFeatures(session,
+      NULL,
+      DismPackageNone,
+      &pFeatures,
+      &uiCount);
+    if (FAILED(hr))
+    {
+      FString message = L"DismGetFeatures Failed: ";
+      OutputDebugStringW(message + HrToString(hr));
+      goto Cleanup;
+    }
+
+    //Print out all of the feature names in the image
+    OutputDebugStringW(L"Here are all of the features in the image:");
+    for (UINT i = 0; i < uiCount; ++i)
+    {
+      FString message = pFeatures[i].FeatureName;
+      OutputDebugStringW(L"Feature name: " + message);
+      AddFeaturePair(pairs, pFeatures[i].FeatureName, pFeatures[i].State);
     }
 
 Cleanup:
+
+    hrLocal = DismDelete(pFeatures);
+    if (FAILED(hrLocal))
+    {
+      OutputDebugStringW(L"DismDelete Failed: " + HrToString(hrLocal));
+    }
+
+    // Close the DismSession to free up resources tied to the offline session
+    hrLocal = DismCloseSession(session);
+    if (FAILED(hrLocal))
+    {
+      OutputDebugStringW(L"DismCloseSession Failed: " + HrToString(hrLocal));
+    }
 
     // Shutdown the DISM API to free up remaining resources
     hrLocal = DismShutdown();
@@ -974,7 +1028,7 @@ Cleanup:
     }
 }
 
-void CApp::OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex)
+void CApp::OnMount(bool unMount, bool jumpTo, bool featureOf, unsigned srcPanelIndex)
 {
   const unsigned destPanelIndex = (NumPanels <= 1) ? srcPanelIndex : (1 - srcPanelIndex);
   CPanel& srcPanel = Panels[srcPanelIndex];
@@ -1086,9 +1140,15 @@ void CApp::OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex)
     copyDialog.Strings = copyFolders;
     copyDialog.Value = destPath;
 
-    if (jumpToSame) {
-      LangString(IDS_JUMP, copyDialog.Title);
-      LangString(IDS_JUMP_TO, copyDialog.Static);
+    if (jumpTo) {
+      if (featureOf) {
+        LangString(IDS_FEATURE, copyDialog.Title);
+        LangString(IDS_FEATURE_OF, copyDialog.Static);
+      }
+      else {
+        LangString(IDS_JUMP, copyDialog.Title);
+        LangString(IDS_JUMP_TO, copyDialog.Static);
+      }
     }
     else {
       LangString(unMount ? IDS_UNMOUNT : IDS_MOUNT, copyDialog.Title);
@@ -1284,8 +1344,13 @@ void CApp::OnMount(bool unMount, bool jumpToSame, unsigned srcPanelIndex)
     options.replaceAltStreamChars = false;
     options.showErrorMessages = true;
 
-    if (jumpToSame) {
-      result = destPanel.BindToPathAndRefresh(destPath);
+    if (jumpTo) {
+      if (featureOf) {
+        OnFeature(destPath, srcPanelIndex);
+      }
+      else {
+        result = destPanel.BindToPathAndRefresh(destPath);
+      }
     }
     else {
       result = srcPanel.MountTo(options, indices, NULL);

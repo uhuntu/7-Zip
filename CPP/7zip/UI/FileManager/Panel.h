@@ -66,8 +66,8 @@ DECLARE_INTERFACE(CPanelCallback)
 {
   virtual void OnTab() = 0;
   virtual void SetFocusToPath(unsigned index) = 0;
-  virtual void OnFeature(bool unMount, bool jumpToSame) = 0;
-  virtual void OnMount(bool unMount, bool jumpToSame) = 0;
+  virtual void OnFeature(UString destPath) = 0;
+  virtual void OnMount(bool unMount, bool jumpTo, bool featureOf) = 0;
   virtual void OnCopy(bool move, bool copyToSame) = 0;
   virtual void OnSetSameFolder() = 0;
   virtual void OnSetSubFolder() = 0;

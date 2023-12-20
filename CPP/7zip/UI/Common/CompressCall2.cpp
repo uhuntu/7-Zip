@@ -284,7 +284,7 @@ bool GetMountedImageInfo_NT(UStringVector& mountPaths, UStringVector& mountImage
         goto Cleanup;
     }
 
-    DismMountedImageInfo* ImageInfo;
+    DismMountedImageInfo* ImageInfo = NULL;
     UINT ImageInfoCount;
 
     hr = DismGetMountedImageInfo(&ImageInfo, &ImageInfoCount);
