@@ -204,7 +204,7 @@ static const CButtonInfo g_ArchiveButtons[] =
 static const CButtonInfo g_WimDismButtons[] =
 {
   { IDM_MOUNT_TO,   IDB_MOUNT,  IDB_MOUNT2,  IDS_MOUNT },
-  {IDM_UNMOUNT_FROM,IDB_UNMOUNT,IDB_UNMOUNT2,IDS_UNMOUNT },
+  //{IDM_UNMOUNT_FROM,IDB_UNMOUNT,IDB_UNMOUNT2,IDS_UNMOUNT },
   { IDM_JUMP_TO,    IDB_JUMP,   IDB_JUMP2,   IDS_JUMP },
   { IDM_FEATURE,    IDB_FEATURE,IDB_FEATURE2,IDS_FEATURE },
   // { IDM_NEW_FROM,   IDB_NEW,    IDB_NEW2,    IDS_NEW },
@@ -892,13 +892,13 @@ void CApp::OnFeature(UString mountPath, unsigned srcPanelIndex)
      state = L"UninstallPending";
      break;
    case DismStateStaged:
-     state = L"Staged";
+     state = L"Staged";                 // Disabled
      break;
    case DismStateRemoved:
-     state = L"Removed";
+     state = L"Removed";                // DisabledWithPayloadRemoved
    break;
    case DismStateInstalled:
-     state = L"Installed";
+     state = L"Installed";              // Enabled
      break;
    case DismStateInstallPending:
      state = L"InstallPending";
@@ -1044,7 +1044,8 @@ void CApp::OnMount(bool unMount, bool jumpTo, bool featureOf, unsigned srcPanelI
     bool ret = srcPanel.GuidArchives(mountPaths, wimGuid);
 
     if (!ret) {
-      return;
+      unMount = true;
+      goto _unMount_;
     }
 
     UStringVector unMountPaths;
@@ -1080,7 +1081,10 @@ void CApp::OnMount(bool unMount, bool jumpTo, bool featureOf, unsigned srcPanelI
       return;
     }
   }
-  else {
+
+_unMount_:
+
+  if (unMount) {
     srcPanel.GetMountedImageInfo(mountPaths, mountImages);
 
     mountPaths_ = mountPaths; // keep the original paths

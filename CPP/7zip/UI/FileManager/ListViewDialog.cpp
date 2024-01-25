@@ -447,6 +447,7 @@ bool CListViewDialog::OnNotify(UINT /* controlID */, LPNMHDR header)
   switch (header->code)
   {
     case LVN_ITEMACTIVATE:
+    case NM_RCLICK:
       if (g_LVN_ITEMACTIVATE_Support)
       {
         OnEnter();

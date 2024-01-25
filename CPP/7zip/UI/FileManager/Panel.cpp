@@ -1210,7 +1210,7 @@ bool CPanel::GuidArchives(UStringVector &mountImages, UString &wimGuid)
   GetFilePaths(indices, paths);
   if (paths.Size() != 1)
   {
-    MessageBox_Error_LangID(IDS_SELECT_ONE_FILE);
+    //MessageBox_Error_LangID(IDS_SELECT_ONE_FILE);
     return false;
   }
   ::GuidArchives(paths, wimGuid);
